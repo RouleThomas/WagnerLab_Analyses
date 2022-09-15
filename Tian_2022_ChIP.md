@@ -12,17 +12,29 @@ module load Anaconda/2019.10
 conda activate CondaGS
 ```
 Installed sound effect to be notify on command runnin more than 5seconds by following [this](https://github.com/c0rp-aubakirov/notify_after_command_executed/)
-
+```
+ git clone https://github.com/c0rp-aubakirov/notify_after_command_executed.git
+ cd notify_after_command_executed/
+ echo "source $(pwd)/postexec_notify" >> ~/.bashrc
+ ```
+ Restart terminal and tested if notification appear after 5sec ```sleep 6``` : 
+ @FAIL:  Does not work when I restart, mention "postexec_notify: No such file or directory"
+ 
 --> Download files from the SRA (paired end mode):
-*Files information can be found in ChIP analyses Tan et al 2022.xlsx#
+*Files information can be found in ChIP analyses Tan et al 2022.xlsx*
 ```
 fasterq-dump SRR18596327 -S
 fasterq-dump SRR18596325 -S
 fasterq-dump SRR15663624 -S
 fasterq-dump SRR15663617 -S
 fasterq-dump SRR15663616 -S
-
+fasterq-dump SRR15663629 -S
 ```
+--> Compress/tidy/rename file with .sh script (script edited with ```nano```)
+```
+sbatch scripts/organize_raw_fasta.sh
+```
+Submitted batch job 197628
 
 
 
