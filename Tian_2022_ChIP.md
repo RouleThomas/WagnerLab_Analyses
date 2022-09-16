@@ -30,11 +30,19 @@ fasterq-dump SRR15663617 -S
 fasterq-dump SRR15663616 -S
 fasterq-dump SRR15663629 -S
 ```
+## 2. Start analyses ##
+*20220915*
 --> Compress/tidy/rename file with .sh script (script edited with ```nano```)
 ```
 sbatch scripts/organize_raw_fasta.sh
 ```
-Submitted batch job 197628
+Submitted batch job 197628 --> DONE
+*20220916*
+--> FASTQC to check adaptors type
+```
+sbatch scripts/fastqc_raw.sh
+```
+Submitted batch job 197643
 
 
 
