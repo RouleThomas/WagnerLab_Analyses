@@ -17,10 +17,10 @@ Installed sound effect to be notify on command runnin more than 5seconds by foll
  cd notify_after_command_executed/
  echo "source $(pwd)/postexec_notify" >> ~/.bashrc
  ```
- Restart terminal and tested if notification appear after 5sec ```sleep 6``` : 
+ Restart terminal and tested if notification appear after 5sec ```sleep 6``` : \
  @FAIL:  Does not work when I restart, mention "postexec_notify: No such file or directory"
  
---> Download files from the SRA (paired end mode):
+--> Download files from the SRA (paired end mode):\
 *Files information can be found in ChIP analyses Tan et al 2022.xlsx*
 ```
 fasterq-dump SRR18596327 -S
@@ -31,18 +31,25 @@ fasterq-dump SRR15663616 -S
 fasterq-dump SRR15663629 -S
 ```
 ## 2. Start analyses ##
-*20220915*
+*20220915*\
 --> Compress/tidy/rename file with .sh script (script edited with ```nano```)
 ```
 sbatch scripts/organize_raw_fasta.sh
 ```
-Submitted batch job 197628 --> DONE
-*20220916*
+Submitted batch job 197628=DONE\
+*20220916*\
 --> FASTQC to check adaptors type
 ```
 sbatch scripts/fastqc_raw.sh
 ```
-Submitted batch job 197643
+Submitted batch job 197643=DONE\
+--> Trimming (some have adapters; some not; see *Tan et al 2022.xlsx*)
+```
+sbatch scripts/trimmomatic.sh
+sbatch scripts/trimmomatic_adaptor_removal.sh
+```
+Submitted batch job 197661   \
+Submitted batch job 197662   \
 
 
 
