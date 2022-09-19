@@ -49,10 +49,26 @@ Submitted batch job 197643=DONE\
 sbatch scripts/trimmomatic.sh
 sbatch scripts/trimmomatic_adaptor_removal.sh
 ```
-Submitted batch job 197661   \
-Submitted batch job 197662   \
+Submitted batch job 197661=DONE   \
+Submitted batch job 197662=DONE   \
+
+*20220919* \
+Over-representated sequence still present in H3K27me3 IP \
+Blast it on NCBI(**AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA**TCATTCCAGACAACTCCT): bold region blast to SARS-Cov2.... \
+*I think ok to keep these, they will just not align to the genome*\
+
+--> Mapping
+```
+sbatch scripts/mapped_1.sh
+```
+Submitted batch job 197710 (FIE)\
+Submitted batch job 197712 (H3K27me3)\
+Submitted batch job 197714 (IGG)\
+Submitted batch job 197715 (input)\
+
+
 
 
 
 Minor issues:
-- 
+- Mapping only work on node01 or node03
