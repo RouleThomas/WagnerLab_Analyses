@@ -72,7 +72,12 @@ Start/End 1.20pm\10pm End \
 sbatch scripts/downsampleBam.sh
 ```
 Submitted batch job 197750\
-Start/End 11.48am/\
+Start/End 11.48am/=FAIL\
+**output:** *[SEVERE][Biostar145820]Problem writing temporary file file:///tmp/sortingcollection.3596660749531177790.tmp.  Try setting TMP_DIR to a file system with lots of space.
+htsjdk.samtools.util.RuntimeIOException: Problem writing temporary file file:///tmp/sortingcollection.3596660749531177790.tmp.  Try setting TMP_DIR to a file system with lots of space.*\
+**troubleshoots:**
+- Try 
+
 
 
 
