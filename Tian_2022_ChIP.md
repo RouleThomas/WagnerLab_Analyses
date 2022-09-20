@@ -61,12 +61,18 @@ Blast it on NCBI(**AAGTCGGAGGCCAAGCGGTCTTAGGAAGACAA**TCATTCCAGACAACTCCT): bold r
 ```
 sbatch scripts/mapped_1.sh
 ```
-Submitted batch job 197710 (FIE)\
-Submitted batch job 197712 (H3K27me3)\
-Submitted batch job 197714 (IGG)\
-Submitted batch job 197715 (input)\
-Start 1.20pm\End \
+Submitted batch job 197710 (FIE)=DONE\
+Submitted batch job 197712 (H3K27me3)=DONE\
+Submitted batch job 197714 (IGG)=DONE\
+Submitted batch job 197715 (input)=DONE\
+Start/End 1.20pm\10pm End \ 
 
+--> Downsample replicate (for H3K27me3 and EMF2 2 Replicates)
+```
+sbatch scripts/downsampleBam.sh
+```
+Submitted batch job 197750\
+Start/End 11.48am/\
 
 
 
