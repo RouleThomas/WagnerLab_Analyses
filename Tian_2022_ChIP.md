@@ -73,12 +73,42 @@ sbatch scripts/downsampleBam.sh
 ```
 Submitted batch job 197750\
 Start/End 11.48am/=FAIL\
-**output:** *[SEVERE][Biostar145820]Problem writing temporary file file:///tmp/sortingcollection.3596660749531177790.tmp.  Try setting TMP_DIR to a file system with lots of space.
+**output:**\
+*[SEVERE][Biostar145820]Problem writing temporary file file:///tmp/sortingcollection.3596660749531177790.tmp.  Try setting TMP_DIR to a file system with lots of space.
 htsjdk.samtools.util.RuntimeIOException: Problem writing temporary file file:///tmp/sortingcollection.3596660749531177790.tmp.  Try setting TMP_DIR to a file system with lots of space.*\
-**troubleshoots:**
-- Try 
-
-
+**troubleshoots:**\
+- Try create a tmp folder in working directory to store temporary files and edit java comand (follow [this](https://www.biostars.org/p/42613/)) 
+```
+mkdir tmp
+java -Djava.io.tmpdir=`pwd`/tmp TMP_DIR=`pwd`/tmp -jar COMAND
+```
+Submitted batch job 197762=FAIL\
+**output:**\
+*Error: Could not find or load main class TMP_DIR=.home.roule.Tian_2022TPC_ChIP.tmp*\
+**troubleshoots:**\
+- Try direct to tmp folder directly (follow [this](https://www.biostars.org/p/42613/)) 
+```
+java -Djava.io.tmpdir=tmp TMP_DIR=tmp -jar COMAND
+```
+Submitted batch job 197763=FAIL\
+**output:**\
+Error: Could not find or load main class TMP_DIR=tmp
+**troubleshoots:**\
+- Try to put the tmp-related argument at the end of the command
+Submitted batch job 197764=WORK BUT NEW FAIL\
+**output:**\
+*[SEVERE][Biostar145820]There was an error in the command line arguments. Please check your parameters : Expected one or zero argument but got 3 : [mapped/chip/EMF2_Rep2.dupmark.sorted.bam, -Djava.io.tmpdir=tmp, TMP_DIR=tmp]
+com.github.lindenb.jvarkit.lang.JvarkitException$CommandLineError: There was an error in the command line arguments. Please check your parameters : Expected one or zero argument but got 3*
+**troubleshoots:**\
+- Try to re-order correctly the different arguments and add ```-Xmx2g``` to allow 2G max of temporary files
+```
+ java -Xmx2g -Djava.io.tmpdir=tmp -jar ${JVARKIT_PATH}/dist/biostar145820.jar \
+     --seed ${seed} -n ${min_val} \
+     -o ${out_dir}/${samp}_Rep${rep}.dupmark.bam \
+     ${in_dir}/${samp}_Rep${rep}.dupmark.sorted.bam \
+     TMP_DIR=tmp
+```
+Submitted batch job 197766
 
 
 Minor issues:
