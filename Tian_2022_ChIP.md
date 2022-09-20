@@ -117,6 +117,16 @@ Submitted batch job 197769=DONE\
 Last=2hrs for 2 sample with 2 replicates\
 **Troubleshootings Conclusion:** The java syntax was not good; For me ```-Xmx2g -Djava.io.tmpdir=tmp``` (store temporary file to tmp folder and allow 2G max) needs to be in between ```java``` (call java) and ```-jar``` (JAR file is used: biostar145820.jar); Then other arguments ```-n``` minimum number of read in one of the replicate; ```--seed 42``` (because that is the number of the universe, lol, could be any number... That is to generate randomness and reproducibility as a subset of the reads are taken)
 
+--> Call peak IP to input control\
+```
+module load Anaconda/2019.10
+conda activate CondaGS
+sbatch scripts/macs2_callpeaks.sh
+```
+Submitted batch job 197779=????\
+
+
+
 
 
 
