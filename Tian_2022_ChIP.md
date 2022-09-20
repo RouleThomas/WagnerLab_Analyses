@@ -113,7 +113,8 @@ Submitted batch job 197767=FAIL\
 *[SEVERE][Biostar145820]There was an error in the command line arguments. Please check your parameters : Expected one or zero argument but got 2 : [mapped/chip/EMF2_Rep2.dupmark.sorted.bam, TMP_DIR=tmp]\*
 **troubleshoots:**\
 - Remove the ```TMP_DIR=tmp```
-Submitted batch job 197769=DONE
+Submitted batch job 197769=DONE\
+Last=2hrs for 2 sample with 2 replicates\
 **Troubleshootings Conclusion:** The java syntax was not good; For me ```-Xmx2g -Djava.io.tmpdir=tmp``` (store temporary file to tmp folder and allow 2G max) needs to be in between ```java``` (call java) and ```-jar``` (JAR file is used: biostar145820.jar); Then other arguments ```-n``` minimum number of read in one of the replicate; ```--seed 42``` (because that is the number of the universe, lol, could be any number... That is to generate randomness and reproducibility as a subset of the reads are taken)
 
 
