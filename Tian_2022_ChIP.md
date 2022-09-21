@@ -145,12 +145,12 @@ Needs to modify the macs2 command (just added ```--broad``` parameter:
 ```
 macs2_callpeaks_broad.sh
 ```
-Submitted batch job 197820=???
-CHUI AL
+Submitted batch job 197820=FAIL\
+CHUI AL re launch job 197831 to complete the final step missing
 
 
 --> Call peak on pooled bam file narrow and broad
-CHUI AL, follow Sammy script, need to pool the bam then call the peak
+CHUI AL, follow Sammy script, need to pool the bam then call the peak : https://github.com/sklasfeld/GreenscreenProject/blob/main/scripts/macs2_callpeaks_publishedChIPs.sh
 
 
 
