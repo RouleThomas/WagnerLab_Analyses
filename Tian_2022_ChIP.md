@@ -123,8 +123,22 @@ module load Anaconda/2019.10
 conda activate CondaGS
 sbatch scripts/macs2_callpeaks.sh
 ```
-Submitted batch job 197779=????\
-
+Submitted batch job 197779=FAIL\
+**output:**\
+*INFO  @ Tue, 20 Sep 2022 17:43:30: #3 Call peaks for each chromosome... 
+ValueError: cannot resize this array: it does not own its data*
+**troubleshoots:**\
+Seems OK to ignore the error. Nevertheless, seems to be cause by not enough space in temporary shared folder, let's try adding one with the option ```--tempdir PATH```
+```
+module load Anaconda/2019.10
+conda activate CondaGS
+sbatch scripts/macs2_callpeaks_test.sh
+```
+Submitted batch job 197801=DONE but other FAIL\
+No more error message but files are the same so that could have been ignore.\
+**output:**\
+*awk: `10' argument to `-v' not in 'var=value' form*
+Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` --> Script XXX has been corrected
 
 
 
