@@ -117,7 +117,7 @@ Submitted batch job 197769=DONE\
 Last=2hrs for 2 sample with 2 replicates\
 **Troubleshootings Conclusion:** The java syntax was not good; For me ```-Xmx2g -Djava.io.tmpdir=tmp``` (store temporary file to tmp folder and allow 2G max) needs to be in between ```java``` (call java) and ```-jar``` (JAR file is used: biostar145820.jar); Then other arguments ```-n``` minimum number of read in one of the replicate; ```--seed 42``` (because that is the number of the universe, lol, could be any number... That is to generate randomness and reproducibility as a subset of the reads are taken)
 
---> Call peak IP to input control\
+--> Call peak IP to input control individually\
 ```
 module load Anaconda/2019.10
 conda activate CondaGS
@@ -138,9 +138,24 @@ Submitted batch job 197801=DONE but other FAIL\
 No more error message but files are the same so that could have been ignore.\
 **output:**\
 *awk: `10' argument to `-v' not in 'var=value' form*
-Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` --> Script *macs2_callpeaks.sh* has been corrected
+Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` >>> Script *macs2_callpeaks.sh* has been corrected
 
---> Generate coverage file (bigwig)\
+--> Select Broad peaks for histone\
+Needs to modify the macs2 command (just added ```--broad``` parameter:
+```
+macs2_callpeaks_broad.sh
+```
+Submitted batch job 197820=???
+CHUI AL
+
+
+--> Call peak on pooled bam file narrow and broad
+CHUI AL, follow Sammy script, need to pool the bam then call the peak
+
+
+
+
+--> Generate coverage file (bigwig)from bam file\
 Try [bamCoverage](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html) since we are using Paired-end sequencing data\
 ```
 bamCoverage \
@@ -157,9 +172,45 @@ bamCoverage \
 sbatch scripts/BamToBigwig.sh
 sbatch scripts/BamToBigwig1.sh
 ```
-Submitted batch job 197810 (EMF2, H3K27me3)=\
-Submitted batch job 197811 (input, IgG)=\
+Submitted batch job 197810 (EMF2, H3K27me3)=DONE\
+Submitted batch job 197811 (input, IgG)=DONE\
 
+--> Merge the two bigwig replicates into 1 bigwig
+wiggletool merge parameter, install it from git:
+```
+git clone https://github.com/dpryan79/libBigWig.git
+cd libBigWig
+make install
+git clone --recurse-submodules https://github.com/samtools/htslib.git
+cd htslib 
+make install
+```
+FAIL at make for each command, authorization stuff\
+Try install through Conda instead:\
+Go to new conda environment just in case\
+```
+conda activate CondaUmap
+conda install -c bioconda wiggletools
+```
+DONE, bigwig mean > bedGraph > bigwig
+```
+wiggletools mean mapped/chip/downsample/H3K27me3_Rep1.dupmark.sorted.bw mapped/chip/downsample/H3K27me3_Rep2.dupmark.sorted.bw > mapped/chip/downsample/H3K27me3.bedGraph
+```
+FAIL, format is not in bedgraph : write_bg
+```
+wiggletools write_bg mapped/chip/downsample/H3K27me3.wig mean mapped/chip/downsample/H3K27me3_Rep1.dupmark.sorted.bw mapped/chip/downsample/H3K27me3_Rep2.dupmark.sorted.bw
+/home/roule/GreenScreen/Software/bedGraphToBigWig mapped/chip/downsample/H3K27me3.wig ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_chr_count.txt mapped/chip/downsample/H3K27me3.bw
+```
+DONE\
+**Troubleshootings Conclusion:** Command to use to pool 2 bigwig:
+```
+conda activate CondaUmap
+wiggletools write_bg mapped/chip/downsample/H3K27me3.wig mean mapped/chip/downsample/H3K27me3_Rep1.dupmark.sorted.bw mapped/chip/downsample/H3K27me3_Rep2.dupmark.sorted.bw
+/home/roule/GreenScreen/Software/bedGraphToBigWig mapped/chip/downsample/H3K27me3.wig ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_chr_count.txt mapped/chip/downsample/H3K27me3.bw
+```
+**Alternative:** I may also make a wig from the pooled bam file
+
+--> Annotate peak to genes
 
 
 
