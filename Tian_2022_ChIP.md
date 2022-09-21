@@ -140,7 +140,26 @@ No more error message but files are the same so that could have been ignore.\
 *awk: `10' argument to `-v' not in 'var=value' form*
 Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` --> Script *macs2_callpeaks.sh* has been corrected
 
---> Generate coverage file (bigwig)
+--> Generate coverage file (bigwig)\
+Try [bamCoverage](https://deeptools.readthedocs.io/en/develop/content/tools/bamCoverage.html) since we are using Paired-end sequencing data\
+```
+bamCoverage \
+--bam <input>.bam \
+--outFileName <output>.bw \
+--outFileFormat bigwig \
+--binSize 1 \
+--numberOfProcessors 4 \
+--extendReads
+--scaleFactor 0.5
+```
+```--binSize 1``` for good resolution; ```--scaleFactor 0.5``` to obtain the exact number of reads respective to the bam, otherwise it count two instead of 1.; ```--extendReads``` Reads extented taking into account mean fragment size of all mated reads.
+```
+sbatch scripts/BamToBigwig.sh
+sbatch scripts/BamToBigwig1.sh
+```
+Submitted batch job 197810 (EMF2, H3K27me3)=\
+Submitted batch job 197811 (input, IgG)=\
+
 
 
 
