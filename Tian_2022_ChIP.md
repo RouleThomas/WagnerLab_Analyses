@@ -138,7 +138,9 @@ Submitted batch job 197801=DONE but other FAIL\
 No more error message but files are the same so that could have been ignore.\
 **output:**\
 *awk: `10' argument to `-v' not in 'var=value' form*
-Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` --> Script XXX has been corrected
+Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` --> Script *macs2_callpeaks.sh* has been corrected
+
+--> Generate coverage file (bigwig)
 
 
 
