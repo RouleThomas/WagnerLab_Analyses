@@ -145,14 +145,17 @@ Needs to modify the macs2 command (just added ```--broad``` parameter:
 ```
 macs2_callpeaks_broad.sh
 ```
-Submitted batch job 197820=FAIL\
-CHUI AL re launch job 197831 to complete the final step missing
+Submitted batch job 197820=FAIL at greenscreen filtering\
+Submitted batch job 197831 to complete with greenscreen filtering=DONE\
 
 
---> Call peak on pooled bam file narrow and broad
-CHUI AL, follow Sammy script, need to pool the bam then call the peak : https://github.com/sklasfeld/GreenscreenProject/blob/main/scripts/macs2_callpeaks_publishedChIPs.sh
-
-
+--> Call peak (narrow and broad) on pooled bam
+```
+sbatch scripts/macs2_callpeaks_BamPool.sh
+sbatch scripts/macs2_callpeaks_BamPool_broad.sh
+```
+Submitted batch job 197853 (narrow) =DONE 
+Submitted batch job 197854 (broad) =DONE
 
 
 --> Generate coverage file (bigwig)from bam file\
@@ -211,9 +214,78 @@ wiggletools write_bg mapped/chip/downsample/H3K27me3.wig mean mapped/chip/downsa
 **Alternative:** I may also make a wig from the pooled bam file
 
 --> Annotate peak to genes
+CHUI AL
 
 
+--> Venn Diagram mine and Tan analyses
+Import the bed2venn.py python script to generate venn diagram from two bed file from [here](https://github.com/YichaoOU/HemTools/)
+```
+python3 scripts/bed2venn.py -b1 data/peaks_for_comparison/H3K27me3_pool_peaks.broadPeak -b2 data/peaks_for_comparison/H3K27me3_peaks_Tan.bed -l1 Greenscreen -l2 Tan et al
+```
+**output:**\
+*File "scripts/bed2venn.py", line 88
+    print "A: Number of lines in %s: %s"%(args.b1,F1)
+                                       ^
+SyntaxError: invalid syntax*
+**troubleshoots:**\
+Change to python2 using Umap conda environment:
+```
+python scripts/bed2venn.py -b1 data/peaks_for_comparison/H3K27me3_pool_peaks.broadPeak -b2 data/peaks_for_comparison/H3K27me3_peaks_Tan.bed -l1 Greenscreen -l2 Tan
+```
+**output:**\
+ImportError: No module named matplotlib
+ImportError: No module named seaborn
+ImportError: No module named matplotlib_venn
 
+**troubleshoots:**\
+```
+pip install matplotlib
+pip install seaborn
+pip install matplotlib_venn
+```
+Many errors:
+```
+ERROR: Received illegal bin number 4294967295 from getBin call.
+ERROR: Unable to add record to tree.
+Traceback (most recent call last):
+  File "scripts/bed2venn.py", line 105, in <module>
+    main()
+  File "scripts/bed2venn.py", line 87, in main
+    out = wccount(outFile)
+  File "scripts/bed2venn.py", line 25, in wccount
+    df = pd.read_csv(filename,sep="\t",header=None)
+  File "/home/roule/.conda/envs/CondaUmap/lib/python2.7/site-packages/pandas/io/parsers.py", line 702, in parser_f
+    return _read(filepath_or_buffer, kwds)
+  File "/home/roule/.conda/envs/CondaUmap/lib/python2.7/site-packages/pandas/io/parsers.py", line 429, in _read
+    parser = TextFileReader(filepath_or_buffer, **kwds)
+  File "/home/roule/.conda/envs/CondaUmap/lib/python2.7/site-packages/pandas/io/parsers.py", line 895, in __init__
+    self._make_engine(self.engine)
+  File "/home/roule/.conda/envs/CondaUmap/lib/python2.7/site-packages/pandas/io/parsers.py", line 1122, in _make_engine
+    self._engine = CParserWrapper(self.f, **self.options)
+  File "/home/roule/.conda/envs/CondaUmap/lib/python2.7/site-packages/pandas/io/parsers.py", line 1853, in __init__
+    self._reader = parsers.TextReader(src, **kwds)
+  File "pandas/_libs/parsers.pyx", line 545, in pandas._libs.parsers.TextReader.__cinit__
+pandas.errors.EmptyDataError: No columns to parse from file*
+```
+**troubleshoots:**\
+- Try correct/clean the input beds and keep the first three column of both bed files
+```
+cat data/peaks_for_comparison/H3K27me3_peaks_Tan.bed | awk '{ if ($2!=$3) print $0 }' > data/peaks_for_comparison/H3K27me3_peaks_Tan_corr.bed
+cat data/peaks_for_comparison/H3K27me3_pool_peaks.broadPeak | awk '{ if ($2!=$3) print $0 }' > data/peaks_for_comparison/H3K27me3_pool_corr.bed
+```
+- also tried:
+```
+awk '($2<$3){print $0}' data/peaks_for_comparison/H3K27me3_peaks_Tan.bed > data/peaks_for_comparison/H3K27me3_peaks_Tan_corr.bed
+awk '($2<$3){print $0}' data/peaks_for_comparison/H3K27me3_peaks_Tan > data/peaks_for_comparison/H3K27me3_peaks_Tan_corr.bed
+```
+**ouputs:**\
+New ERROR:
+ModuleCmd_Load.c(213):ERROR:105: Unable to locate a modulefile for 'bedtools'
+
+It fail at running bedtools at line 82, perform slight modification (use bedops instead of bedtools) and that run but very few overlap but they should be a lot! I think because bedops --intersect not doing exactly same stuff as bedtools intersect -u
+**troubleshoots:**\
+Let's try [this](https://github.com/asntech/intervene) instead:
+CHUI AL
 
 
 Minor issues:
