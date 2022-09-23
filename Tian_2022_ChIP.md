@@ -284,8 +284,58 @@ ModuleCmd_Load.c(213):ERROR:105: Unable to locate a modulefile for 'bedtools'
 
 It fail at running bedtools at line 82, perform slight modification (use bedops instead of bedtools) and that run but very few overlap but they should be a lot! I think because bedops --intersect not doing exactly same stuff as bedtools intersect -u
 **troubleshoots:**\
-Let's try [this](https://github.com/asntech/intervene) instead:
-CHUI AL
+Let's try [this](https://github.com/asntech/intervene) instead:\
+Install through Conda to have all dependency; create a new conda environment for Venn:\
+```
+conda create --name venn
+conda activate venn
+conda install -c bioconda intervene
+intervene --help
+```
+**ouputs:**\
+pkg_resources.ContextualVersionConflict: (numpy 1.14.2 (/home/roule/.conda/envs/venn/lib/python3.6/site-packages), Requirement.parse('numpy>=1.15'), {'seaborn'})
+**troubleshoots:**\
+```
+pip3 install 'numpy==1.15.0' #install numpy1.15 and unistalled numpy1.14 
+```
+DONE\
+Launch the Venn command:\
+```
+intervene venn -i data/peaks_for_comparison/H3K27me3_pool_corr.bed data/peaks_for_comparison/H3K27me3_peaks_Tan_corr.bed --output data/peaks_for_comparison/H3K27me3
+intervene venn -i data/peaks_for_comparison/EMF2_pool_peaks.narrowPeak data/peaks_for_comparison/EMF2_peaks_Tan.bed --output data/peaks_for_comparison/EMF2
+intervene venn -i data/peaks_for_comparison/H3K27me3_pool_corr.bed data/peaks_for_comparison/EMF2_pool_peaks.narrowPeak --output data/peaks_for_comparison/EMF2_H3K27_greenscreen
+```
+DONE, files are in pdf format
+Tested other representation\
+```
+intervene upset -i data/peaks_for_comparison/H3K27me3_pool_corr.bed data/peaks_for_comparison/H3K27me3_peaks_Tan_corr.bed data/peaks_for_comparison/EMF2_pool_peaks.narrowPeak data/peaks_for_comparison/EMF2_peaks_Tan.bed --output data/peaks_for_comparison/upset_EMF2_H3K27_all
+```
+**troubleshoots:**\
+Needs to install manually into R UpsetR package
+```R
+install.packages("UpSetR")
+q()
+```
+Launch the previously generated R script to generate the plot:\
+```
+/home/roule/R/R-4.2.0/bin/Rscript data/peaks_for_comparison/upset_EMF2_H3K27_all/Intervene_upset.R
+```
+DONE, generated plot in pdf
+
+
+
+
+
+
+
+
+`
+
+
+
+
+
+
 
 
 Minor issues:
