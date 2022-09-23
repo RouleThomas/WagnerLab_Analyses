@@ -31,7 +31,7 @@ fasterq-dump SRR15663617 -S
 fasterq-dump SRR15663616 -S
 fasterq-dump SRR15663629 -S
 ```
-## 2. Start analyses ##
+## 2. Start analyses (Peak calling broad H3K27me3 and Narrow EMF2) ##
 *20220915*\
 --> Compress/tidy/rename file with .sh script (script edited with ```nano```)
 ```
@@ -140,7 +140,7 @@ No more error message but files are the same so that could have been ignore.\
 *awk: `10' argument to `-v' not in 'var=value' form*
 Need to add ```q=${q}``` after the -v argument, as follow: ```awk -F"\t" -v q=${q} 'BEGIN{OFS="\t"} $9>=q {print}' ${macs2_out}/${x}_peaks.narrowPeak > ${macs2_out}/noMask_qval${q}/${x}_peaks.narrowPeak``` >>> Script *macs2_callpeaks.sh* has been corrected
 
---> Select Broad peaks for histone\
+--> Select Broad peaks for histone and IgG\
 Needs to modify the macs2 command (just added ```--broad``` parameter:
 ```
 macs2_callpeaks_broad.sh
@@ -321,6 +321,30 @@ Launch the previously generated R script to generate the plot:\
 /home/roule/R/R-4.2.0/bin/Rscript data/peaks_for_comparison/upset_EMF2_H3K27_all/Intervene_upset.R
 ```
 DONE, generated plot in pdf
+
+## Conclusion 1 ##
+
+- H3K27me3 peaks identified are quite comparable in between greenscreen and Tan pipeline (XX% overlap)
+- Much more EMF2 peaks identified using greenscreen pipeline as compare to Tan analyses (XX% more)
+--> Let's now remove the H3K27me3 and EMF2 peaks that overlap with IgG peaks see what we obtain
+
+
+## 3. Pursue analyses (Peak calling broad IgG and filtered out overlapping H3K27me3 and EMF2 peaks) ##
+Call peaks IgG to input\
+```
+sbatch scripts/macs2_callpeaks_broad_IGG.sh
+sbatch scripts/macs2_callpeaks_broad1.sh
+```
+Submitted batch job 197875= DONE, FAIL at filtering p-value and removing greenscreen region (corrected in the script macs2_callpeaks_broad_IGG.sh, but launch aditional to correct)\
+Submitted batch job 197876= DONE\
+
+Only 28 peaks has been called! That is very few, thus likely not change downstream analyses...\
+To make it change, let's decrease the qvalue for calling the peaks from 10 to 5\
+```
+sbatch scripts/macs2_callpeaks_broad.sh # q value edited from 10 to 5 
+```
+Submitted batch job 197877=
+
 
 
 
