@@ -219,10 +219,6 @@ wiggletools write_bg mapped/chip/downsample/H3K27me3.wig mean mapped/chip/downsa
 ```
 **Alternative:** I may also make a wig from the pooled bam file
 
---> Annotate peak to genes
-CHUI AL
-
-
 --> Venn Diagram mine and Tan analyses
 Import the bed2venn.py python script to generate venn diagram from two bed file from [here](https://github.com/YichaoOU/HemTools/)
 ```bash
@@ -349,11 +345,18 @@ Submitted batch job 197876= DONE\
 Only 28 peaks has been called! That is very few, thus likely not change downstream analyses...\
 To make it change, let's decrease the qvalue for calling the peaks from 10 to 5\
 ```bash
-sbatch scripts/macs2_callpeaks_broad.sh # q value edited from 10 to 5 
+sbatch scripts/macs2_callpeaks_broad_IGG.sh # q value edited from 10 to 5 
 ```
-Submitted batch job 197877=CHUI AL
+Submitted batch job 197926=DONE\
+Similarly, only 53 peaks identified.\
+--> let's only remove the H3K27me3 and EMF2b peaks overlapping with the 28 IgG peaks using bedtools:
+```bash
+bedtools intersect -a data/macs2_out/chipPeaks/broad_gsMask_qval10/H3K27me3_pool_peaks.broadPeak -b data/macs2_out/chipPeaks/broad_gsMask_qval10/IgG_peaks.broadPeak -v > data/peaks_for_comparison/H3K27me3_noIgG.broadPeak
+```
 
 
+
+## 4. Annotate peaks to genes ##
 
 
 
