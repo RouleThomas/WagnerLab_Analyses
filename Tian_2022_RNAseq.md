@@ -1,4 +1,5 @@
-# Re-analyses of the Tian et al 2022 RNAseq using:
+# Re-analyses of the Tan et al 2022 RNAseq using:
+[Paper](https://academic.oup.com/plcell/article-abstract/34/8/2969/6580212?redirectedFrom=fulltext&login=false#367433007)
 
 - trimming: XXX
 - mapping: XXX
@@ -20,8 +21,13 @@ conda activate CondaGS
 --> Download files from the SRA (paired end mode):\
 *Files information can be found in RNAseq analyses Tan et al 2022.xlsx*
 ```bash
-fasterq-dump SRR18596327 -S
-
+fasterq-dump SRR15663633 -S
+fasterq-dump SRR15663632 -S
+fasterq-dump SRR15663619 -S
+fasterq-dump SRR15663618 -S
+fasterq-dump SRR15663623 -S
 ```
+ongoing
+
 ## 2. Start analyses ##
 
