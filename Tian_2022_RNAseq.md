@@ -30,4 +30,18 @@ fasterq-dump SRR15663623 -S
 ongoing
 
 ## 2. Start analyses ##
+--> Check presence of adaptors with FASTQC\
+
+
+
+
+
+
+
+
+
+
+
+
+
 
