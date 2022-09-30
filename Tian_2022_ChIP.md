@@ -1,5 +1,5 @@
 # Re-analyses of the Tian et al 2022 ChIP using the greenscreen pipeline
-- Tian et al 2022 paper [here](https://academic.oup.com/plcell/article/34/8/2969/6580212#367433007)
+- Tan et al 2022 paper [here](https://academic.oup.com/plcell/article/34/8/2969/6580212#367433007)
 - Klasfeld et al 2022 paper [here](https://www.biorxiv.org/content/10.1101/2022.02.27.482177v1)\
 Tian et al used IgG as control for EMF2b ChIP, let's try using input instead
 
