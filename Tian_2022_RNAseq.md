@@ -61,8 +61,12 @@ STAR --runThreadN 12 --runMode genomeGenerate --genomeDir ../GreenScreen/rice/Gr
 ```
 Comand launch into ```sbatch scripts/STAR_indexation.sh```\
 Submitted batch job 198132=DONE, got the following warning ```!!!!! WARNING: --genomeSAindexNbases 14 is too large for the genome size=373245519, which may cause seg-fault at the mapping step. Re-run genome generation with recommended --genomeSAindexNbases 13```
-So re-run with the correction indicated
-Submitted batch job 198133=CHUI AL
+So script re-run with the correction indicated\
+Submitted batch job 198133=DONE (no warning)
+--> Mapping with STAR
+CHUI AL
+
+
 
 ## --> Trimming reads and mapping ##
 
