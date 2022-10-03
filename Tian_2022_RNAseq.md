@@ -45,13 +45,10 @@ sbatch scripts/fastqc_raw.sh
 ```
 Submitted batch job 198129=DONE
 
+CHUI AL: CHECK
 
 
 
-```bash
-sbatch scripts/fastqc_raw.sh
-```
-Submitted batch job 198129=
 
 ###Test both Trimming and non-Trimming of the reads, then follow with the method showing best mapping###
 --> Index the genome with STAR
