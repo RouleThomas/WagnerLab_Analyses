@@ -62,7 +62,7 @@ Submitted batch job 198132=DONE, got the following warning ```!!!!! WARNING: --g
 So script re-run with the correction indicated\
 Submitted batch job 198133=DONE (no warning)
 
-## --> Trimming reads and mapping ##
+## Trimming reads and mapping ##
 -->Trimming\
 Lets try to use the standard parameter as for ChIP\
 ```bash
@@ -72,12 +72,36 @@ java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomat
         LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33
 ```
 Launch as ```sbatch scripts/trimmomatic_noadapter.sh``` and ```sbatch scripts/trimmomatic_noadapter1.sh```
-Submitted batch job 198153\
-Submitted batch job 198154
+Submitted batch job 198153=DONE\
+Submitted batch job 198154=DONE\
+Trimming performed succesfully, fastqc failed, let's re-run a script for fastqc ```sbatch scripts/trimmomatic_fastqc.sh``` only while correcting the initial script ```scripts/trimmomatic_noadapter.sh``` for future use
+Submitted batch job 198162=DONE\
+Submitted batch job 198163=DONE\
+**Trimming does not change anything (same fastqc FAIL)**. Maybe I did not trim enough, lets change parameter so that it trimm out 15nt (as the 10 first from *Per base sequence content* looks bad): added ```HEADCROP:15``` parameter:
+```bash
+java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomatic-0.39.jar \
+        PE -threads 3 -phred33 ${raw_fastq1} ${raw_fastq2} \
+        ${trim_fastq1} ${trim_fastq2} ${trim_fastq3} ${trim_fastq4}\
+        LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33 HEADCROP:15
+```
+Launched as ```sbatch scripts/trimmomatic_noadapter_crop15bp.sh```; Submitted batch job 198165
+CHUI AL
+
+In parrallel, test trimming using PE adapter file:
+```bash
+java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomatic-0.39.jar \
+        PE -threads 3 -phred33 ${raw_fastq1} ${raw_fastq2} \
+        ${trim_fastq1} ${trim_fastq2} ${trim_fastq3} ${trim_fastq4}\
+        ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 \
+        LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33
+```
+Launched as ```sbatch scripts/trimmomatic_PEadapter.sh```; Submitted batch job 198166
+CHUI AL
 
 
 
-## --> Non-trimming of the reads and mapping ##
+
+## Non-trimming of the reads and mapping ##
 Go for mapping directly with the unmapped raw reads:\
 Command use at AVIESAN SCHOOL:
 ```bash
@@ -88,6 +112,17 @@ Command used by Sammy:
 STAR --readFilesIn /home/wagner-lab/sklasfeld/Projects/TFL1/RNAseq/V2/trimmed_fastq/ft_24hrFRP_R1.trimmed.fastq --outFileNamePrefix ft_24hrFRP_R1 --runThreadN 12 --runMode alignReads --genomeDir /home/wagner-lab/sklasfeld/Araport11/STAR_genome_dir --sjdbOverhang 84 --outSAMprimaryFlag AllBestScore --outSJfilterCountTotalMin 10 5 5 5 --outSAMstrandField intronMotif --outFilterIntronMotifs RemoveNoncanonical --alignIntronMin 60 --alignIntronMax 6000 --outSAMtype BAM SortedByCoordinate --outFilterMismatchNmax 2 --outWigType bedgraph
 ```
 We need to adapt as we are working with Rice genome\
+Let s use the mapping parameter from the [Science paper](https://www.science.org/doi/full/10.1126/science.aax8862) from Julia Bailey-Serres.\
+They used Bowtie2/hisat2 allowing 2 nt mismatch (Tan et al paper use the same tool). --> Lets use Hisat2 (as bowtie2 do not support spliced alignemnt)
+
+
+- STAR default parameter (raw and trim reads) (```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198164=CHUI AL
+```STAR --genomeDir ../GreenScreen/rice/GreenscreenProject/meta/genome_STAR_RNAseq --runThreadN 4 --readFilesCommand zcat --outFileNamePrefix mapped_STAR/${x} --readFilesIn fastq/raw/${x}_1.fastq.gz fastq/raw/${x}_2.fastq.gz --outSAMtype BAM SortedByCoordinate```
+- hisat2 default parameter (raw and trim reads)
+Installation following [hisat2 github](https://github.com/DaehwanKimLab/hisat2).\
+Genome indexation launch under ```scripts/hisat2_indexation.sh```; Submitted batch job 198167=CHUI AL
+
+
 
 
 
