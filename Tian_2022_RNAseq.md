@@ -39,15 +39,16 @@ Submitted batch job 198123=DONE\
 Submitted batch job 198124=DONE
 
 --> Check presence of adaptors with FASTQC\
-*Kmer Content and Sequence Duplication levels  always fail for RNA-seq*\
+*Kmer Content and Sequence Duplication levels always fail for RNA-seq*\
 ```bash
 sbatch scripts/fastqc_raw.sh
 ```
-Submitted batch job 198129=DONE
-
-CHUI AL: CHECK
-
-
+Submitted batch job 198129=DONE\
+FAIL: Per base sequence content/Per sequence GC content/Sequence Duplication Levels
+-  Per base sequence content: The random hexamer primers, which are used to generate the cDNA library from your RNA transcripts were shown to not bind completly random. This non-random binding leads to this bias in "per base sequence content" from base 1-15.
+-  Sequence Duplication Levels: can be because of highle expressed genes
+-  Per sequence GC content: Can be adaptors, trimming may remove that, or contamination (that will not mapped to genome in that case)
+Quality looks good for direct mapping without mapping -> no presence of adaptor so let's use standard trimming parameter
 
 
 ###Test both Trimming and non-Trimming of the reads, then follow with the method showing best mapping###
@@ -60,13 +61,19 @@ Comand launch into ```sbatch scripts/STAR_indexation.sh```\
 Submitted batch job 198132=DONE, got the following warning ```!!!!! WARNING: --genomeSAindexNbases 14 is too large for the genome size=373245519, which may cause seg-fault at the mapping step. Re-run genome generation with recommended --genomeSAindexNbases 13```
 So script re-run with the correction indicated\
 Submitted batch job 198133=DONE (no warning)
---> Mapping with STAR
-CHUI AL
-
-
 
 ## --> Trimming reads and mapping ##
-
+-->Trimming\
+Lets try to use the standard parameter as for ChIP\
+```bash
+java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomatic-0.39.jar \
+        PE -threads 3 -phred33 ${raw_fastq1} ${raw_fastq2} \
+        ${trim_fastq1} ${trim_fastq2} ${trim_fastq3} ${trim_fastq4}\
+        LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33
+```
+Launch as ```sbatch scripts/trimmomatic_noadapter.sh``` and ```sbatch scripts/trimmomatic_noadapter1.sh```
+Submitted batch job 198153\
+Submitted batch job 198154
 
 
 
