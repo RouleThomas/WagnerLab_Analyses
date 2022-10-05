@@ -92,25 +92,8 @@ uk.ac.babraham.FastQC.Sequence.SequenceFormatException: Ran out of data in the m
 	at uk.ac.babraham.FastQC.Analysis.AnalysisRunner.run(AnalysisRunner.java:77)
 	at java.lang.Thread.run(Thread.java:748)```
  **troubleshooting:** looks like I got fastqc for all so should be ok for interpretation\
+ **Trimming has solved the previous *Per base sequence content* FAILED** But there is less reads so not sure that is the best approaches (raw read may be better, lets see!)
  
- 
- 
-
-
-CHUI AL
-
-
-
-
-
-
-
-
-
-
-
-
-
 In parrallel, test trimming using PE adapter file:
 ```bash
 java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomatic-0.39.jar \
@@ -119,8 +102,12 @@ java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomat
         ILLUMINACLIP:TruSeq3-PE.fa:2:30:10 \
         LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33
 ```
-Launched as ```sbatch scripts/trimmomatic_PEadapter.sh```; Submitted batch job 198166
-CHUI AL
+
+Launched as ```sbatch scripts/trimmomatic_PEadapter.sh```; Submitted batch job 198166=DONE\
+Looks similar as without using the adapters.\
+**Let's mapp the 15bp crop reads** with STAR and hisat2:
+- STAR default parameter (trim reads) (```sbatch scripts/mapping_STAR_trimmed.sh```; Submitted batch job 198186=CHUI AL
+
 
 
 
@@ -140,11 +127,16 @@ Let s use the mapping parameter from the [Science paper](https://www.science.org
 They used Bowtie2/hisat2 allowing 2 nt mismatch (Tan et al paper use the same tool). --> Lets use Hisat2 (as bowtie2 do not support spliced alignemnt)
 
 
-- STAR default parameter (raw and trim reads) (```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198164=CHUI AL
+- STAR default parameter (raw reads) (```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198164=DONE
 ```STAR --genomeDir ../GreenScreen/rice/GreenscreenProject/meta/genome_STAR_RNAseq --runThreadN 4 --readFilesCommand zcat --outFileNamePrefix mapped_STAR/${x} --readFilesIn fastq/raw/${x}_1.fastq.gz fastq/raw/${x}_2.fastq.gz --outSAMtype BAM SortedByCoordinate```
-- hisat2 default parameter (raw and trim reads)
+**success except one file**: ```EXITING because of FATAL ERROR in reads input: quality string length is not equal to sequence length SOLUTION: fix your fastq file``` for WT_rep2, Lets try to investigate the fastq file!
+
+CHUI AL
+
+- hisat2 default parameter (raw reads)
 Installation following [hisat2 github](https://github.com/DaehwanKimLab/hisat2).\
 Genome indexation launch under ```scripts/hisat2_indexation.sh```; Submitted batch job 198167=CHUI AL
+
 
 
 
