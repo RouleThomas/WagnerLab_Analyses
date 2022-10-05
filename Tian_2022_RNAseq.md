@@ -106,7 +106,7 @@ java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomat
 Launched as ```sbatch scripts/trimmomatic_PEadapter.sh```; Submitted batch job 198166=DONE\
 Looks similar as without using the adapters.\
 **Let's mapp the 15bp crop reads** with STAR and hisat2:
-- STAR default parameter (trim reads) (```sbatch scripts/mapping_STAR_trimmed.sh```; Submitted batch job 198186=CHUI AL
+- STAR default parameter (trim reads) (```sbatch scripts/mapping_STAR_trimmed.sh```; Submitted batch job 198186=DONE, here no error message regarding fastq from WT_Rep2
 
 
 
@@ -129,13 +129,55 @@ They used Bowtie2/hisat2 allowing 2 nt mismatch (Tan et al paper use the same to
 
 - STAR default parameter (raw reads) (```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198164=DONE
 ```STAR --genomeDir ../GreenScreen/rice/GreenscreenProject/meta/genome_STAR_RNAseq --runThreadN 4 --readFilesCommand zcat --outFileNamePrefix mapped_STAR/${x} --readFilesIn fastq/raw/${x}_1.fastq.gz fastq/raw/${x}_2.fastq.gz --outSAMtype BAM SortedByCoordinate```
-**success except one file**: ```EXITING because of FATAL ERROR in reads input: quality string length is not equal to sequence length SOLUTION: fix your fastq file``` for WT_rep2, Lets try to investigate the fastq file!
+**success except one file**: ```EXITING because of FATAL ERROR in reads input: quality string length is not equal to sequence length SOLUTION: fix your fastq file``` for WT_rep2, Lets try to investigate the fastq file! Could have been due to the loop according to [forum](https://github.com/alexdobin/STAR/issues/1055)! lets try to remap that file only, same command; Submitted batch job 198195=SAME FAIL. Lets look at the fastq file where error detected: ```zgrep -A4 "@SRR15663632.24281996" fastq/raw/WT_Rep2_1.fastq.gz```
 
-CHUI AL
+
+XXX
+
+
 
 - hisat2 default parameter (raw reads)
 Installation following [hisat2 github](https://github.com/DaehwanKimLab/hisat2).\
-Genome indexation launch under ```scripts/hisat2_indexation.sh```; Submitted batch job 198167=CHUI AL
+Genome indexation launch under ```scripts/hisat2_indexation.sh```; Submitted batch job 198167=DONE\
+```bash
+../GreenScreen/Software/hisat2/hisat2 -x ../GreenScreen/rice/GreenscreenProject/meta/genome_hisat2_RNAseq -1 fastq/raw/${x}_1.fastq.gz -2 fastq/raw/${x}_2.fastq.gz -S mapped_hisat2/${x}.sam
+```
+**Let's redo it and provide the gff while building the index, that should improve the mapping...**
+```
+../GreenScreen/Software/hisat2/hisat2-build ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta ../GreenScreen/rice/GreenscreenProject/meta/genome_hisat2_RNAseq --ss --exon ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/transcripts_exon.gff
+```
+Submitted batch job 198198=FAIL ```Error: could not open --exon``` 
+**troubleshooting**: maybe need to convert GFF to GTF, lets do it with [gffread](https://github.com/gpertea/gffread)\
+```bash
+../GreenScreen/Software/gffread/gffread ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/transcripts_exon.gff -T -o ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/transcripts_exon.gtf
+```
+Re run indexation with the gtf ```sbatch scripts/hisat2_indexation.sh```; Submitted batch job 198199=FAIL\
+**troubleshooting**: issue is I need a splice site file and an exon file for --ss and --exon, and not GTF. [I can make these files using python script from hisat2](https://rnabio.org/module-01-inputs/0001/04/01/Indexing/):\
+```bash
+../GreenScreen/Software/hisat2/hisat2_extract_splice_sites.py ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/transcripts_exon.gtf > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/splicesites.tsv
+../GreenScreen/Software/hisat2/hisat2_extract_exons.py ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/transcripts_exon.gtf > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv
+```
+FAIL, result in empty file...\
+**troubleshooting**: Probably my gtf is not format as hisat2-extract wants... Lets look at the python script more in detail
+Lets try with Arabidopsis gff, see if same fail. 
+```
+../GreenScreen/Software/gffread/gffread ../GreenScreen/tutorial/GreenscreenProject/meta/ArabidopsisGenome/Araport11_GFF3_genes_transposons.201606.gff -T -o ../GreenScreen/tutorial/GreenscreenProject/meta/ArabidopsisGenome/Araport11_GFF3_genes_transposons.201606.gtf
+../GreenScreen/tutorial/GreenscreenProject/meta/ArabidopsisGenome/exons.tsv
+```
+That work! So the gtf file is indeed misformated in rice. Looks like in each row of rice gtf gene-id is not indicated. The Gff looks like shit also. Lets download another one: *Oryza_sativa.IRGSP-1.0.54.chr.gff3.gz* from [here](https://plants.ensembl.org/Oryza_sativa/Info/Index).\
+```bash
+../GreenScreen/Software/gffread/gffread ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gff3 -T -o ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf
+../GreenScreen/Software/hisat2/hisat2_extract_splice_sites.py ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/splicesites.tsv
+../GreenScreen/Software/hisat2/hisat2_extract_exons.py ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv
+```
+Work, proceed with the indexation
+```bash
+sbatch scripts/hisat2_indexation.sh
+```
+Submitted batch job 198201=XXX
+**troubleshooting conclusion:** The gff file was not well formated! Lets use the Oryza_sativa.IRGSP-1.0.54.chr.gtf from now on for hisat2 (the gff is weird as it shows the chromosome as a gene...). Otherwise "transcripts_exons.gff" used for STAR mapping is exactly the same.
+
+XXX WAIT INDEX, DELETE ME AND LAUNCH: Launch as ```sbatch scripts/mapping_hisat2_raw.sh```, also convert into bam file and indexed them.\
 
 
 
