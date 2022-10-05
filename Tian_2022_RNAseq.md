@@ -85,13 +85,14 @@ java -jar ${trimmomatic_install_dir}/Trimmomatic-0.39/Trimmomatic-0.39/trimmomat
         LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36 TOPHRED33 HEADCROP:15
 ```
 Launched as ```sbatch scripts/trimmomatic_noadapter_crop15bp.sh```; Submitted batch job 198165\
-some (failed: SDG711RNAi_Rep1_1.trimmed_paired.fastq.gz, SDG711RNAi_Rep1_1.trimmed_unpaired.fastq.gz, Failed to process file SDG711RNAi_Rep1_2.trimmed_paired.fastq.gz, SDG711RNAi_Rep1_2.trimmed_unpaired.fastq.gz, SDG711RNAi_Rep2_2.trimmed_paired.fastq.gz, SDG711RNAi_Rep2_2.trimmed_unpaired.fastq.gz, WT_Rep1_1.trimmed_unpaired.fastq.gz, WT_Rep1_2.trimmed_unpaired.fastq.gz, WT_Rep2_2.trimmed_paired.fastq.gz, WT_Rep2_2.trimmed_unpaired.fastq.gz, WT_Rep3_1.trimmed_paired.fastq.gz, WT_Rep3_1.trimmed_unpaired.fastq.gz, WT_Rep3_2.trimmed_paired.fastq.gz, WT_Rep3_2.trimmed_unpaired.fastq.gz ```Failed to process file SDG711RNAi_Rep1_1.trimmed_paired.fastq.gz
+trimming OK, some fastqc fail (failed: SDG711RNAi_Rep1_1.trimmed_paired.fastq.gz, SDG711RNAi_Rep1_1.trimmed_unpaired.fastq.gz, Failed to process file SDG711RNAi_Rep1_2.trimmed_paired.fastq.gz, SDG711RNAi_Rep1_2.trimmed_unpaired.fastq.gz, SDG711RNAi_Rep2_2.trimmed_paired.fastq.gz, SDG711RNAi_Rep2_2.trimmed_unpaired.fastq.gz, WT_Rep1_1.trimmed_unpaired.fastq.gz, WT_Rep1_2.trimmed_unpaired.fastq.gz, WT_Rep2_2.trimmed_paired.fastq.gz, WT_Rep2_2.trimmed_unpaired.fastq.gz, WT_Rep3_1.trimmed_paired.fastq.gz, WT_Rep3_1.trimmed_unpaired.fastq.gz, WT_Rep3_2.trimmed_paired.fastq.gz, WT_Rep3_2.trimmed_unpaired.fastq.gz ```Failed to process file SDG711RNAi_Rep1_1.trimmed_paired.fastq.gz
 uk.ac.babraham.FastQC.Sequence.SequenceFormatException: Ran out of data in the middle of a fastq entry.  Your file is probably truncated
 	at uk.ac.babraham.FastQC.Sequence.FastQFile.readNext(FastQFile.java:179)
 	at uk.ac.babraham.FastQC.Sequence.FastQFile.next(FastQFile.java:125)
 	at uk.ac.babraham.FastQC.Analysis.AnalysisRunner.run(AnalysisRunner.java:77)
 	at java.lang.Thread.run(Thread.java:748)```
- **troubleshooting:** interested only in paired so need redo XXXX
+ **troubleshooting:** looks like I got fastqc for all so should be ok for interpretation\
+ 
  
  
 
