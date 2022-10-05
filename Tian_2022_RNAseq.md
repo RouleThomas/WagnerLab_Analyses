@@ -129,10 +129,12 @@ They used Bowtie2/hisat2 allowing 2 nt mismatch (Tan et al paper use the same to
 
 - STAR default parameter (raw reads) (```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198164=DONE
 ```STAR --genomeDir ../GreenScreen/rice/GreenscreenProject/meta/genome_STAR_RNAseq --runThreadN 4 --readFilesCommand zcat --outFileNamePrefix mapped_STAR/${x} --readFilesIn fastq/raw/${x}_1.fastq.gz fastq/raw/${x}_2.fastq.gz --outSAMtype BAM SortedByCoordinate```
-**success except one file**: ```EXITING because of FATAL ERROR in reads input: quality string length is not equal to sequence length SOLUTION: fix your fastq file``` for WT_rep2, Lets try to investigate the fastq file! Could have been due to the loop according to [forum](https://github.com/alexdobin/STAR/issues/1055)! lets try to remap that file only, same command; Submitted batch job 198195=SAME FAIL. Lets look at the fastq file where error detected: ```zgrep -A4 "@SRR15663632.24281996" fastq/raw/WT_Rep2_1.fastq.gz```
+**success except one file**: ```EXITING because of FATAL ERROR in reads input: quality string length is not equal to sequence length SOLUTION: fix your fastq file``` for WT_rep2, Lets try to investigate the fastq file! Could have been due to the loop according to [forum](https://github.com/alexdobin/STAR/issues/1055)! lets try to remap that file only, same command; Submitted batch job 198195=SAME FAIL. Lets look at the fastq file where error detected: ```zgrep -A4 "@SRR15663632.24281996" fastq/raw/WT_Rep2_1.fastq.gz```, looks like the quality string lenght is equal to sequence lenght...
+**troubleshooting**:I tried re-run the command within the cluster not as a slurm job and obtain same error... Lets try to unzip fastq and check for format error at this specific line and remove using ```nano``` and ```CTRL+W``` [ID line](https://github.com/alexdobin/STAR/issues/726). FAIL never try to open a fastq with nano :D.\
+**troubleshooting**:Lets try to do the mapping with the uncompressed fastq file:
+Submitted batch job 198204=XXX
 
-
-XXX
+**troubleshooting**:Remove the line that pose issue in both fastq file (XXX, check internet..)
 
 
 
