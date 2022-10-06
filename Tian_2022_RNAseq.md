@@ -132,10 +132,9 @@ They used Bowtie2/hisat2 allowing 2 nt mismatch (Tan et al paper use the same to
 **success except one file**: ```EXITING because of FATAL ERROR in reads input: quality string length is not equal to sequence length SOLUTION: fix your fastq file``` for WT_rep2, Lets try to investigate the fastq file! Could have been due to the loop according to [forum](https://github.com/alexdobin/STAR/issues/1055)! lets try to remap that file only, same command; Submitted batch job 198195=SAME FAIL. Lets look at the fastq file where error detected: ```zgrep -A4 "@SRR15663632.24281996" fastq/raw/WT_Rep2_1.fastq.gz```, looks like the quality string lenght is equal to sequence lenght...
 **troubleshooting**:I tried re-run the command within the cluster not as a slurm job and obtain same error... Lets try to unzip fastq and check for format error at this specific line and remove using ```nano``` and ```CTRL+W``` [ID line](https://github.com/alexdobin/STAR/issues/726). FAIL never try to open a fastq with nano :D.\
 **troubleshooting**:Lets try to do the mapping with the uncompressed fastq file:
-Submitted batch job 198204=XXX
-
-**troubleshooting**:Remove the line that pose issue in both fastq file (XXX, check internet..)
-
+Submitted batch job 198204=FAIL again
+**troubleshooting**: Check if the fastq is corrupted using ```cat fastq/raw/WT_Rep2_1.fastq | paste - - - - | awk -F '\t' '(length($2)!=length($4))'``` replace cat by ```gunzip -c *.fq.gz``` if working with compressed fastq: If output not empty, file is corrupted (lenght data quality not the same as lenght sequence). No output... The file is not corrupted!!!
+**troubleshooting solution**: let's use the trim file for this file
 
 
 - hisat2 default parameter (raw reads)
@@ -176,10 +175,11 @@ Work, proceed with the indexation
 ```bash
 sbatch scripts/hisat2_indexation.sh
 ```
-Submitted batch job 198201=XXX
-**troubleshooting conclusion:** The gff file was not well formated! Lets use the Oryza_sativa.IRGSP-1.0.54.chr.gtf from now on for hisat2 (the gff is weird as it shows the chromosome as a gene...). Otherwise "transcripts_exons.gff" used for STAR mapping is exactly the same.
+Submitted batch job 198201=DONE
+**troubleshooting conclusion:** The gff file was not well formated! Lets use the Oryza_sativa.IRGSP-1.0.54.chr.gtf from now on for hisat2 (the gff is weird as it shows the chromosome as a gene...). Otherwise "transcripts_exons.gff" used for STAR mapping is exactly the same.\
 
-XXX WAIT INDEX, DELETE ME AND LAUNCH: Launch as ```sbatch scripts/mapping_hisat2_raw.sh```, also convert into bam file and indexed them.\
+--> Mapping with index genome specifying exons and splice sites\
+Launch for raw and trimmed reads: ```sbatch scripts/mapping_hisat2_raw.sh``` *XXX* and ```sbatch scripts/mapping_hisat2_crop15bp.sh``` *Submitted batch job 198214*, also convertion into bam file and indexed them.\
 
 
 
