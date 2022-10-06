@@ -221,7 +221,12 @@ Show very low (<25%) of *Successfully assigned alignments* for both jobs... Look
 **troubleshooting:** Lets try to allow multimapped reads adding ```-M --fraction``` parameter; Submitted batch job 198230=cancel, same low percent...
 **troubleshooting:** 
 - Relaunch hisat2 mapping on raw files to count with it see wether STAR is the isse ```scripts/mapping_hisat2_raw.sh```; Submitted batch job 198231=XXX
-- Relaunch STAR mapping on raw files using the good gtf to see if using different GTF for mapping and counting may be the isse; 1st re-index the genome ```sbatch scripts/STAR_indexation.sh```; Submitted batch job 198233=XXX, then re-do mapping
+- Relaunch STAR mapping on raw files using the good gtf to see if using different GTF for mapping and counting may be the isse; 1st re-index the genome ```sbatch scripts/STAR_indexation.sh```; Submitted batch job 198233=FAIL, fasta and gtf chr name not the same (fasta genome name is chr01 vs gtf is 1...) 
+**troubleshooting solution:** Make fasta and GTF file same header... Lets put FASTA header as 1,2,etc... So here is command that 1st remove *chr0* and then remove *chr* only remaining for the chr>10: ```sed 's/chr0//' ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta | sed 's/chr//' > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome_numeric.fasta```; ```sbatch scripts/STAR_indexation.sh```, Submitted batch job 198234=XXX
+Here command to add *chr* in front of the 1,2,3,etc of the gtf (but useless in my case) ```awk '{ if($1 !~ /^#/){print "chr"$0} else{print $0} }' ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.gtf``` 
+
+
+then re-do mapping
 
 
 
