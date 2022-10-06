@@ -221,7 +221,7 @@ Show very low (<25%) of *Successfully assigned alignments* for both jobs... Look
 **troubleshooting:** Lets try to allow multimapped reads adding ```-M --fraction``` parameter; Submitted batch job 198230=cancel, same low percent...
 **troubleshooting:** 
 - Relaunch hisat2 mapping on raw files to count with it see wether STAR is the isse ```scripts/mapping_hisat2_raw.sh```; Submitted batch job 198231=XXX
-- Relaunch STAR mapping on raw files using the good gtf to see if using different GTF for mapping and counting may be the isse; 1st re-index the genome ```sbatch scripts/STAR_indexation.sh```; Submitted batch job 198232=XXX, then re-do mapping
+- Relaunch STAR mapping on raw files using the good gtf to see if using different GTF for mapping and counting may be the isse; 1st re-index the genome ```sbatch scripts/STAR_indexation.sh```; Submitted batch job 198233=XXX, then re-do mapping
 
 
 
