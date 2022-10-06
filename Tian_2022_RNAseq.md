@@ -179,7 +179,60 @@ Submitted batch job 198201=DONE
 **troubleshooting conclusion:** The gff file was not well formated! Lets use the Oryza_sativa.IRGSP-1.0.54.chr.gtf from now on for hisat2 (the gff is weird as it shows the chromosome as a gene...). Otherwise "transcripts_exons.gff" used for STAR mapping is exactly the same.\
 
 --> Mapping with index genome specifying exons and splice sites\
-Launch for raw and trimmed reads: ```sbatch scripts/mapping_hisat2_raw.sh``` *XXX* and ```sbatch scripts/mapping_hisat2_crop15bp.sh``` *Submitted batch job 198214*, also convertion into bam file and indexed them.\
+Launch for raw and trimmed reads: ```sbatch scripts/mapping_hisat2_raw.sh``` *Submitted batch job 198222* and ```sbatch scripts/mapping_hisat2_crop15bp.sh``` *Submitted batch job 198214*, also convertion into bam file and indexed them.\
+
+**Mapping conclusion comparison tool and parameter:**
+- STAR (check the *Log.final.out file*): raw reads show more uniquely mapped reads than trim reads!
+- hisat2 (no output so take value from the slurm log): raw reads are better. But much fewer uniquely mapped reads as compare to STAR raw.
+Lets perform the counting using STAR raw mapping. All other mapped files deleted to save space...
+
+
+## Generation of the coverage (wig) files ##
+
+
+
+## Counting ##
+Let's check if the data are stranded or non-stranded looking at a bam file on IGV. Color alignment per read strand on IGV showed specific orientation so **data is unstranded**.\
+
+Sammy used ht-seqcount, I used featureCounts, and Julia used summarizeOverlaps function from the GenomicRanges package (weird!!!!) and Tan XXX.\
+From documentation, featureCount is more adapted for paired-end data. Indeed if a reads map on two different gene, it will be ambiguous in htseq count, even if two of the paired reads map on one of the two gene!\
+Lets use a conda environment for featurecount:\
+```bash
+module load Anaconda/2019.10
+conda create -c bioconda -n featurecounts subread
+conda activate featurecounts
+```
+Parameter to use:
+- paired-end mode -p (add -C to not count paired reads with each pair on different chromosome!)
+- -O to assign reads to metafeatures, so genes
+- -P -B -d 30 -D 1000 (set min and max paired reads to 30 to 1000bp)
+- stranded? No
+- -M --fraction to count multimapped reads fractionally? Not recommended for RNAseq so I do not do it. In addition most of my reads are uniquely mapped
+```bash
+featureCounts -p -C -O -P -B -d 30 -D 1000 -a ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf -o counts/${x}.txt mapped_STAR/${x}Aligned.sortedByCoord.out.bam
+```
+Launched as ```sbatch scripts/count_featurecounts.sh```; Submitted batch job 198225=cancel\
+Also test without ```-P -B``` parameters, to count non both end mapped reads, thus more reads count:\
+``` bash
+featureCounts -p -C -O -a ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf -o counts_relax/${x}.txt mapped_STAR/${x}Aligned.sortedByCoord.out.bam
+```
+Launched as ```sbatch scripts/count_featurecounts_relax.sh```; Submitted batch job 198227=cancel\
+Show very low (<25%) of *Successfully assigned alignments* for both jobs... Looks like majority of reads do not align due to no features... 
+**troubleshooting:** Lets try to allow multimapped reads adding ```-M --fraction``` parameter; Submitted batch job 198230=cancel, same low percent...
+**troubleshooting:** 
+- Relaunch hisat2 mapping on raw files to count with it see wether STAR is the isse ```scripts/mapping_hisat2_raw.sh```; Submitted batch job 198231=XXX
+- Relaunch STAR mapping on raw files using the good gtf to see if using different GTF for mapping and counting may be the isse; 1st re-index the genome ```sbatch scripts/STAR_indexation.sh```; Submitted batch job 198232=XXX, then re-do mapping
+
+
+
+
+
+
+
+
+
+
+
 
 
 
