@@ -187,6 +187,23 @@ Launch for raw and trimmed reads: ```sbatch scripts/mapping_hisat2_raw.sh``` *Su
 Lets perform the counting using STAR raw mapping. All other mapped files deleted to save space...
 
 
+## PCA on bam files ##
+To check how well the data cluster. Notably, what is this WT_Rep3, good to use?\
+1. Need create a bed file containing all exons
+Already perform with hisat2 mapping *../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv*
+2. Use multiBamSummary (deeptools) to generate a matrix of read counts
+Install deeptools in CondaGS environment and launch command.
+```bash
+module load Anaconda/2019.10
+conda activate condaGS
+pip install deeptools
+multiBamSummary BED-file --BED ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv --bamfiles mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep3Aligned.sortedByCoord.out.bam mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam -o SDG_WT_matrix.npz
+```
+Launch as ```sbatch scripts/matrix_bam.sh```; Submitted batch job 200425=XXX
+
+
+
+
 ## Generation of the coverage (wig) files ##
 --> Generate coverage file (bigwig)from bam file
 Aligned.sortedByCoord.out.bam files has not been indexed, script *mapping_STAR_raw.sh* has been corrected but indexation launch as ```sbatch scripts/index_bam.sh```; Submitted batch job 200418=DONE
@@ -195,7 +212,7 @@ bamCoverage --bam mapped_STAR/${x}Aligned.sortedByCoord.out.bam --outFileName ma
 ```
 - --binSize 10 will give a 10bp resolution, file may be too big, if that is the case, lets increase it to 50bp
 - normalization in BPM=TPM
-Always better to normalize per TPM. Launch as ```sbatch scripts/BamToBigwig.sh```; Submitted batch job 200421=XXX 
+Always better to normalize per TPM. Launch as ```sbatch scripts/BamToBigwig.sh```; Submitted batch job 200421=DONE, files looks good.
 
 
 ## Counting ##
@@ -244,7 +261,44 @@ Need repeat Mapping ```sbatch scripts/mapping_STAR_trim_WTRep2.sh```; Submitted 
 Re-counting ```sbatch scripts/count_featurecountsWTRep2.sh```; Submitted batch job 200419=DONE; 20819532 (88.0%).\
 **All files are ready for the DEGs calculation**
 
+
 ## DEGs with Deseq2 ##
+See [help](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html). Input is unormalized fragment (as paired-end) counts. As I used featurecounts input is *Count matrix*.\
+Let's set up an R environment for Deseq2. Let's use the *featurecounts* conda environment for Deseq2.\
+1. Install the Deseq2 library using R script
+```bash
+Rscript scripts/install_R_Deseq2.R
+```
+Look like it failed, here is last rows of output:
+```R
+The downloaded source packages are in
+        ‘/tmp/RtmpRNox3Y/downloaded_packages’
+Installation paths not writeable, unable to update packages
+  path: /cm/shared/apps/R/4.2.1/lib64/R/library
+  packages:
+    cluster, foreign, MASS, Matrix, nlme, nnet, survival
+Warning messages:
+1: In install.packages(...) :
+  installation of package ‘RcppArmadillo’ had non-zero exit status
+2: In install.packages(...) :
+  installation of package ‘mixsqp’ had non-zero exit status
+3: In install.packages(...) :
+  installation of package ‘ashr’ had non-zero exit status
+[1] "PACKAGE VERSIONS:"
+[1] "argparse"
+[1] ‘2.1.6’
+[1] "tidyverse"
+Error in packageVersion("tidyverse") :
+  there is no package called ‘tidyverse’
+Execution halted
+```
+Once in R, ```library("DESeq2")``` result in nothing....
+
+
+XXX 
+
+2. Construct the DESeqDataSet using a count matrix (featurecounts output)
+
 
 
 
