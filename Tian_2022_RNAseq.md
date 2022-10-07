@@ -188,7 +188,14 @@ Lets perform the counting using STAR raw mapping. All other mapped files deleted
 
 
 ## Generation of the coverage (wig) files ##
-
+--> Generate coverage file (bigwig)from bam file
+Aligned.sortedByCoord.out.bam files has not been indexed, script *mapping_STAR_raw.sh* has been corrected but indexation launch as ```sbatch scripts/index_bam.sh```; Submitted batch job 200418=DONE
+```bash
+bamCoverage --bam mapped_STAR/${x}Aligned.sortedByCoord.out.bam --outFileName mapped_STAR/${x}.Aligned.sortedByCoord.out.bw --outFileFormat bigwig --normalizeUsing BPM --binSize 10 
+```
+- --binSize 10 will give a 10bp resolution, file may be too big, if that is the case, lets increase it to 50bp
+- normalization in BPM=TPM
+Always better to normalize per TPM. Launch as ```sbatch scripts/BamToBigwig.sh```; Submitted batch job 200421=XXX 
 
 
 ## Counting ##
@@ -220,13 +227,24 @@ Launched as ```sbatch scripts/count_featurecounts_relax.sh```; Submitted batch j
 Show very low (<25%) of *Successfully assigned alignments* for both jobs... Looks like majority of reads do not align due to no features... 
 **troubleshooting:** Lets try to allow multimapped reads adding ```-M --fraction``` parameter; Submitted batch job 198230=cancel, same low percent...
 **troubleshooting:** 
-- Relaunch hisat2 mapping on raw files to count with it see wether STAR is the isse ```scripts/mapping_hisat2_raw.sh```; Submitted batch job 198231=XXX
+- Relaunch hisat2 mapping on raw files to count with it see wether STAR is the isse ```scripts/mapping_hisat2_raw.sh```; Submitted batch job 198231=DONE.
 - Relaunch STAR mapping on raw files using the good gtf to see if using different GTF for mapping and counting may be the isse; 1st re-index the genome ```sbatch scripts/STAR_indexation.sh```; Submitted batch job 198233=FAIL, fasta and gtf chr name not the same (fasta genome name is chr01 vs gtf is 1...) 
 **troubleshooting solution:** Make fasta and GTF file same header... Lets put FASTA header as 1,2,etc... So here is command that 1st remove *chr0* and then remove *chr* only remaining for the chr>10: ```sed 's/chr0//' ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta | sed 's/chr//' > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome_numeric.fasta```; ```sbatch scripts/STAR_indexation.sh```, Submitted batch job 198234=DONE
 Here command to add *chr* in front of the 1,2,3,etc of the gtf (but useless in my case) ```awk '{ if($1 !~ /^#/){print "chr"$0} else{print $0} }' ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.gtf```\
-Then re-mapping ```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198235=XXX
+Then re-mapping ```sbatch scripts/mapping_STAR_raw.sh```; Submitted batch job 198235=DONE, same fail (quality vs sequence lenght) for WT_Rep2. 
+**troubleshooting solution:** Issue was that gtf annotation file use was different for counting and genome indexation, always use the same gtf file!!! Now that mapping is good (good gtf) compare counting between STAR and hisat2, test on *WT_Rep1*:
+- ```featureCounts -p -C -O -P -B -d 30 -D 1000 -M --fraction```: multimapped reads counted STAR_raw: 20873031 77.8% 
+- ```featureCounts -p -C -O -P -B -d 30 -D 1000```: multimapped reads not counted STAR_raw: 720043972 74.7%
+- ```featureCounts -p -C -O```: multimapped reads not counted, non-paired reads counted, STAR_raw: 23685433 88.2%
+- ```featureCounts -p -C -O```: multimapped reads not counted, non-paired reads counted, hisat2_raw: 3458904 12.0%
+**Let's not count multimapped reads but count the non-paired reads using STAR.**,Launch as ```sbatch scripts/count_featurecounts.sh```, For WT_Rep2 trim_crop15bp has been used; Submitted batch job 200414=DONE. All good >85% Successfully assigned alignments.\
+Except WT_Rep2 failed because come from mapping from another GTF.\
+Need repeat Trimming (let's not crop, will gain more information) ```sbatch scripts/trimmomatic_noadapter_WTRep2.sh```; Submitted batch job 200415=DONE\
+Need repeat Mapping ```sbatch scripts/mapping_STAR_trim_WTRep2.sh```; Submitted batch job 200416=DONE\
+Re-counting ```sbatch scripts/count_featurecountsWTRep2.sh```; Submitted batch job 200419=DONE; 20819532 (88.0%).\
+**All files are ready for the DEGs calculation**
 
-Count the new hisat2 and STAR mapping, test with and without multimapping count and if shit again, maybe that is ribosomal RNA remaining???
+## DEGs with Deseq2 ##
 
 
 
