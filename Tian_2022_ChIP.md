@@ -3,6 +3,11 @@
 - Klasfeld et al 2022 paper [here](https://www.biorxiv.org/content/10.1101/2022.02.27.482177v1)\
 Tian et al used IgG as control for EMF2b ChIP, let's try using input instead
 
+- trimming: Trimmomatic 
+- mapping: bowtie2
+- peak calling: MACS2
+- assin peak to gene (custom python script)
+
 ## 1. import raw fastq file ##
 --> Setup prerequisets and Greenscreen conda environment
 ```bash
