@@ -294,8 +294,14 @@ Execution halted
 ```
 Once in R, ```library("DESeq2")``` result in nothing....
 
+**troubleshooting solution:** Lets not use the script to install, better go into R and install "manually", follow [bioconductor](https://bioconductor.org/packages/release/bioc/html/DESeq2.html):
+```R
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+    
+BiocManager::install("DESeq2")
+```
 
-XXX 
 
 2. Construct the DESeqDataSet using a count matrix (featurecounts output)
 
