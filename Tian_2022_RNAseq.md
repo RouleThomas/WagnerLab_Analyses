@@ -3,8 +3,8 @@
 
 - trimming: Trimmomatic 
 - mapping: STAR
-- counting: XXX
-- DE: XXX
+- counting: featurecounts
+- DE: Deseq2
 
 
 ## 1. import raw fastq file ##
