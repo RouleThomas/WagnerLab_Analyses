@@ -294,13 +294,20 @@ Execution halted
 ```
 Once in R, ```library("DESeq2")``` result in nothing....
 
-**troubleshooting solution:** Lets not use the script to install, better go into R and install "manually", follow [bioconductor](https://bioconductor.org/packages/release/bioc/html/DESeq2.html):
+**troubleshooting:** Lets not use the script to install, better go into R and install "manually", follow [bioconductor](https://bioconductor.org/packages/release/bioc/html/DESeq2.html):
 ```R
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
     
 BiocManager::install("DESeq2")
 ```
+**troubleshooting:** Multiple fail, because of depedencies with other packages. Maybe also because I am on node04 in which I encountered issue to run CHIPQC in R in the past!\
+Try install as follow a, within node01:
+```R
+BiocManager::install("DESeq2", dependencies = TRUE)
+```
+**troubleshooting:** Error: C++11 standard requested but CXX11 is not defined
+Do that for all fail, trouble shoot XXX
 
 
 2. Construct the DESeqDataSet using a count matrix (featurecounts output)
