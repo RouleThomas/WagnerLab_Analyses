@@ -224,7 +224,7 @@ XXX
 --> Generate coverage file (bigwig)from bam file
 Aligned.sortedByCoord.out.bam files has not been indexed, script *mapping_STAR_raw.sh* has been corrected but indexation launch as ```sbatch scripts/index_bam.sh```; Submitted batch job 200418=DONE
 ```bash
-bamCoverage --bam mapped_STAR/${x}Aligned.sortedByCoord.out.bam --outFileName mapped_STAR/${x}.Aligned.sortedByCoord.out.bw --outFileFormat bigwig --normalizeUsing BPM --binSize 10 
+bamCoverage --bam mapped_STAR/${x}Aligned.sortedByCoord.out.bam --outFileName mapped_STAR/${x}.Aligned.sortedByCoord.out.bw --outFileFormat bigwig --normalizeUsing BPM --binSize 10  
 ```
 - --binSize 10 will give a 10bp resolution, file may be too big, if that is the case, lets increase it to 50bp
 - normalization in BPM=TPM
