@@ -192,17 +192,33 @@ To check how well the data cluster. Notably, what is this WT_Rep3, good to use?\
 1. Need create a bed file containing all exons
 Already perform with hisat2 mapping *../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv*
 2. Use multiBamSummary (deeptools) to generate a matrix of read counts
-Install deeptools in CondaGS environment and launch command.
+Install deeptools in CondaGS environment and launch command.\
 ```bash
 module load Anaconda/2019.10
 conda activate condaGS
 pip install deeptools
 multiBamSummary BED-file --BED ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv --bamfiles mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep3Aligned.sortedByCoord.out.bam mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam -o SDG_WT_matrix.npz
 ```
-Launch as ```sbatch scripts/matrix_bam.sh```; Submitted batch job 200425=XXX
+Launch as ```sbatch scripts/matrix_bam.sh```; Submitted batch job 200425=DONE, 
+3. Use PlotPCA to make PCA plot
+Example:\
+```bash
+plotPCA -in [multiBamSummary_prefix].npz \
+    --transpose \
+    --ntop 0 \
+    --labels [samp_1] [samp_2] [...] [samp_n] \
+    -o [plotPCA_prefix].png \
+    -T "PCA of read counts in exons"
+```
+- ```transpose``` Transpose matrix in the format of rows to be samples and the columns to be features
+- ```--ntop 0``` All rows are used in PCA
+- [samp] list should be respective to multiBamSummary `bamfiles` parameter
+Command used, into bash script:
+```bash
+XXX
+```
 
-
-
+**Conclusion:** Use XXX for Deseq2
 
 ## Generation of the coverage (wig) files ##
 --> Generate coverage file (bigwig)from bam file
@@ -350,7 +366,18 @@ SDG711RNAi_Rep1_matrix = make_matrix(select(SDG711RNAi_Rep1, -Geneid), pull(SDG7
 ```
 Import all count sample, and combine into 1 file (row= gene and column= condition/replicate); then transform into a single matrix:
 ```R
-XXX
+# import and keep gene ID and counts
+WT_Rep1 = read_delim("counts/WT_Rep1.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam`) %>% rename("WT_Rep1"=`mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam`)
+WT_Rep2 = read_delim("counts/WT_Rep2.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam`) %>% rename("WT_Rep2"=`mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam`)
+SDG711RNAi_Rep2 = read_delim("counts/SDG711RNAi_Rep2.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam`) %>% rename("SDG711RNAi_Rep2"=`mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam`)
+SDG711RNAi_Rep1 = read_delim("counts/SDG711RNAi_Rep1.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam`) %>% rename("SDG711RNAi_Rep1"=`mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam`)
+
+# merge all sample into one datafile
+XXX use left_join
+
+# transform merge tibble into matrix
+counts_merge = make_matrix(select(SDG711RNAi_Rep1, -Geneid), pull(SDG711RNAi_Rep1, Geneid))
+SDG711RNAi_Rep2_matrix = make_matrix(select(SDG711RNAi_Rep2, -Geneid), pull(SDG711RNAi_Rep2, Geneid)) 
 ```
 
 
