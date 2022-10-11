@@ -213,10 +213,15 @@ plotPCA -in [multiBamSummary_prefix].npz \
 - ```transpose``` Transpose matrix in the format of rows to be samples and the columns to be features
 - ```--ntop 0``` All rows are used in PCA
 - [samp] list should be respective to multiBamSummary `bamfiles` parameter
+**troubleshoot Anaconda:** Anaconda loaded but ```conda``` command not recognized!\
+Try to run conda using the correct path: ```/usr/global/environment-modules/Anaconda/2019.10/bin/conda```, FAIL
+```
 Command used, into bash script:
 ```bash
 XXX
 ```
+A
+
 
 **Conclusion:** Use XXX for Deseq2
 
