@@ -306,14 +306,52 @@ Try install as follow a, within node01:
 ```R
 BiocManager::install("DESeq2", dependencies = TRUE)
 ```
-**troubleshooting:** Error: C++11 standard requested but CXX11 is not defined
-Do that for all fail, trouble shoot XXX
-
+**troubleshooting:** ```Error: C++11 standard requested but CXX11 is not defined```\
+modify the Makeconf file from R and add the following; 
+- I do not know where is my R folder dependent on my conda environment (conda folder here : ```../../roule/.conda/envs/featurecounts/``` but no R inside...). 
+- Try using a previous version of R manually installed where I see the Makeconf file. 
+```R
+if (!require("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+    
+BiocManager::install("DESeq2")
+```
+Looks like it work!\
+**troubleshooting:** R parameter version was not good, using an R version install locally within the cluster, it work. **so use ```/home/roule/R/R-4.2.0/bin/R``` to run DESeq2**
+```R
+library("DESeq2")
+```
+**troubleshooting solution:** weird character appear while deleting ```^H``` or using arrows... It is extremely annoying , so create a new conda environment using R4.2.0:
+```bash
+conda create --name DESeq2 r-base=4.2.0
+conda activate DESeq2
+```
+Then force re-installation of DESeq2 ```BiocManager::install("DESeq2", force=TRUE)``` in R, ERROR: ``` there is no package called ‘Matrix’``` so I install it ```BiocManager::install("Matrix")```. Same with ```‘codetools’, ‘survival’``` and WORKS!!!\
+**So to use DESeq2, use *DESeq2* conda environment**
 
 2. Construct the DESeqDataSet using a count matrix (featurecounts output)
-
-
-
+Tidy in R featurecount outputs, import file and keep only column gene ID and counts for each sample.\
+```R
+library("DESeq2")
+library("tidyverse")
+getwd()
+SDG711RNAi_Rep1 = read_delim("counts/SDG711RNAi_Rep1.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1)
+```
+Create function to transform tibble into matrix:
+```R
+make_matrix <- function(df,rownames = NULL){
+  my_matrix <-  as.matrix(df)
+  if(!is.null(rownames))
+    rownames(my_matrix) = rownames
+  my_matrix
+}
+# Transform tibble into matrix
+SDG711RNAi_Rep1_matrix = make_matrix(select(SDG711RNAi_Rep1, -Geneid), pull(SDG711RNAi_Rep1, Geneid))
+```
+Import all count sample, and combine into 1 file (row= gene and column= condition/replicate); then transform into a single matrix:
+```R
+XXX
+```
 
 
 
