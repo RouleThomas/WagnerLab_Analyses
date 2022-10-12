@@ -195,7 +195,7 @@ Already perform with hisat2 mapping *../GreenScreen/rice/GreenscreenProject/meta
 Install deeptools in CondaGS environment and launch command.\
 ```bash
 module load Anaconda/2019.10
-conda activate condaGS
+conda activate CondaGS
 pip install deeptools
 multiBamSummary BED-file --BED ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/exons.tsv --bamfiles mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep3Aligned.sortedByCoord.out.bam mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam -o SDG_WT_matrix.npz
 ```
@@ -213,14 +213,15 @@ plotPCA -in [multiBamSummary_prefix].npz \
 - ```transpose``` Transpose matrix in the format of rows to be samples and the columns to be features
 - ```--ntop 0``` All rows are used in PCA
 - [samp] list should be respective to multiBamSummary `bamfiles` parameter
-**troubleshoot Anaconda:** Anaconda loaded but ```conda``` command not recognized!\
-Try to run conda using the correct path: ```/usr/global/environment-modules/Anaconda/2019.10/bin/conda```, FAIL
-```
-Command used, into bash script:
 ```bash
-XXX
+plotPCA -in SDG_WT_matrix.npz \
+    --transpose \
+    --ntop 0 \
+    --labels mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam mapped_STAR/WT_Rep3Aligned.sortedByCoord.out.bam mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam \
+    -o plotPCA_SDG_WT.png \
+    -T "PCA of read counts in gene"
 ```
-A
+Launched as ```sbatch scripts/plot_PCA.sh```; Submitted batch job 200580=XXX
 
 
 **Conclusion:** Use XXX for Deseq2
