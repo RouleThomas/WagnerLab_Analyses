@@ -448,7 +448,7 @@ Can also do Independent hypothesis weighting, another method to obtain adjusted 
 
 
 4. Data vizualization
-*plotMA* LFC variable over the mean of normalized counts for all the samples in the DESeqDataSet. Points will be colored red if the adjusted p value is less than 0.1.\
+***plotMA*** LFC variable over the mean of normalized counts for all the samples in the DESeqDataSet. Points will be colored red if the adjusted p value is less than 0.1.\
 Better to do it on shrunken log2 fold changes (as it remove noise associated with LFC from low count genes).
 ```R
 plotMA(resLFC, ylim=c(-2,2))
@@ -461,7 +461,6 @@ In addition: Warning message:
 In (function (display = "", width, height, pointsize, gamma, bg,  :
   unable to open connection to X11 display ''
 ```
-
 Lets **back up all files** to come back later after troubleshooting X11:
 ```R
 write.table(res,file="DESeq2/test") # save as matrix
@@ -471,9 +470,13 @@ res = read.table("DESeq2/res",header=TRUE,row.names=1) # load matrix
 resLFC = read.table("DESeq2/resLFC",header=TRUE,row.names=1) # load matrix
 counts_all_matrix = read.table("DESeq2/counts_all_matrix",header=TRUE,row.names=1) # load matrix
 ```
+**troubleshooting solution:** In R type ```Sys.setenv("DISPLAY"=":0.0")``` exit and re-launch: SOLVED, X11 is TRUE
+Re back up all files and launch:
+```R
+plotMA(resLFC, ylim=c(-2,2))
+```
 
-
-*PCA plot*
+***PCA plot***
 
 There is many other plot, explore [doc](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#count-matrix-input) to know more.
 
