@@ -222,8 +222,7 @@ plotPCA -in SDG_WT_matrix.npz \
     -T "PCA of read counts in gene"
 ```
 Launched as ```sbatch scripts/plot_PCA.sh```; Submitted batch job 200580=DONE. Replicate two is weird, maybe explain why it has a different name since the begining...! 
-
-
+![plot](https://github.com/RouleThomas/WagnerLab_Analyses/blob/main/data_RNAseq/plotPCA_SDG_WT.png)
 
 **Conclusion:** Use WT Rep1 and Rep3 and RNAi Rep1 and Rep2 for Deseq2
 
