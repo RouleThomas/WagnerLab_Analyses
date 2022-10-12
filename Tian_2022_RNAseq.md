@@ -356,6 +356,7 @@ Tidy in R featurecount outputs, import file and keep only column gene ID and cou
 ```R
 library("DESeq2")
 library("tidyverse")
+library("apeglm") # BiocManager::install("apeglm")
 getwd()
 SDG711RNAi_Rep1 = read_delim("counts/SDG711RNAi_Rep1.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1)
 ```
@@ -370,39 +371,111 @@ make_matrix <- function(df,rownames = NULL){
 # Transform tibble into matrix
 SDG711RNAi_Rep1_matrix = make_matrix(select(SDG711RNAi_Rep1, -Geneid), pull(SDG711RNAi_Rep1, Geneid))
 ```
-Import all count sample, and combine into 1 file (row= gene and column= condition/replicate); then transform into a single matrix:
+Import all count sample (WT Rep 1 and 3), and combine into 1 file (row= gene and column= condition/replicate); then transform into a single matrix:
 ```R
 # import and keep gene ID and counts
 WT_Rep1 = read_delim("counts/WT_Rep1.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam`) %>% rename("WT_Rep1"=`mapped_STAR/WT_Rep1Aligned.sortedByCoord.out.bam`)
-WT_Rep2 = read_delim("counts/WT_Rep2.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam`) %>% rename("WT_Rep2"=`mapped_STAR_trim/WT_Rep2Aligned.sortedByCoord.out.bam`)
+WT_Rep3 = read_delim("counts/WT_Rep3.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/WT_Rep3Aligned.sortedByCoord.out.bam`) %>% rename("WT_Rep3"=`mapped_STAR/WT_Rep3Aligned.sortedByCoord.out.bam`)
 SDG711RNAi_Rep2 = read_delim("counts/SDG711RNAi_Rep2.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam`) %>% rename("SDG711RNAi_Rep2"=`mapped_STAR/SDG711RNAi_Rep2Aligned.sortedByCoord.out.bam`)
 SDG711RNAi_Rep1 = read_delim("counts/SDG711RNAi_Rep1.txt", delim = "\t", escape_double = FALSE, trim_ws = TRUE, skip = 1) %>% select(Geneid, `mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam`) %>% rename("SDG711RNAi_Rep1"=`mapped_STAR/SDG711RNAi_Rep1Aligned.sortedByCoord.out.bam`)
 
 # merge all sample into one datafile
-XXX use left_join
+counts_all = WT_Rep1 %>% left_join(WT_Rep3) %>% left_join(SDG711RNAi_Rep1) %>% left_join(SDG711RNAi_Rep2)
 
 # transform merge tibble into matrix
-counts_merge = make_matrix(select(SDG711RNAi_Rep1, -Geneid), pull(SDG711RNAi_Rep1, Geneid))
-SDG711RNAi_Rep2_matrix = make_matrix(select(SDG711RNAi_Rep2, -Geneid), pull(SDG711RNAi_Rep2, Geneid)) 
+counts_all_matrix = make_matrix(select(counts_all, -Geneid), pull(counts_all, Geneid)) 
+```
+Create data file ```coldata``` describing each samples; **columns of the count matrix and the rows of the column data in same order**:\
+```R
+# Generate sample description df
+coldata_raw <- data.frame (sample  = c("WT_Rep1", "WT_Rep3", "SDG711RNAi_Rep1", "SDG711RNAi_Rep2"),
+                  genotype = c("WT", "WT", "SDG77RNAi", "SDG77RNAi") )
+
+# transform df into matrix
+coldata = make_matrix(select(coldata_raw, -sample), pull(coldata_raw, sample))
+
+# Check that row name of both matrix (counts and description) are the same
+all(rownames(coldata) %in% colnames(counts_all_matrix)) # output TRUE is correct
+```
+Construct the DESeqDataSet:
+```R
+dds <- DESeqDataSetFromMatrix(countData = counts_all_matrix,
+                              colData = coldata,
+                              design = ~ genotype)
+```
+3. Perform the DEGs
+
+```R
+# Filter out gene with less than 5 reads
+keep <- rowSums(counts(dds)) >= 5
+dds <- dds[keep,]
+
+# Specify the control sample
+dds$genotype <- relevel(dds$genotype, ref = "WT")
+
+# Differential expression analyses
+dds <- DESeq(dds)
+res <- results(dds) # No need to use 'contrast' as only 1 comparison (eg. WT vs mutant)
+res 
+
+# Export result as 'raw_table'
+write.csv(res %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="DESeq2/raw_table.txt")
+raw_table <- read_csv("C:/Users/roule/Box/Ongoing projects/Cluster_GPC/Tan et al 2022 RNAseq/data_RNAseq/DESeq2/raw_table.txt") #To import
+
+# Shrunken LFC for better estimation (notably for low counts and high disperson)
+resLFC <- lfcShrink(dds, coef="genotype_SDG77RNAi_vs_WT", type="apeglm")
+
+# Export result as 'shrunken_table'
+write.csv(resLFC %>% as.data.frame() %>% rownames_to_column("gene") %>% as.tibble(), file="DESeq2/shrunken_table.txt")
+
+# Some summary (numb of DEGs)
+res05 <- results(dds, alpha=0.05)
+summary(res05)
+sum(res05$padj < 0.05, na.rm=TRUE)
+```
+Output statistics
+```
+out of 32137 with nonzero total read count
+adjusted p-value < 0.05
+LFC > 0 (up)       : 1576, 4.9%
+LFC < 0 (down)     : 812, 2.5%
+outliers [1]       : 0, 0%
+low counts [2]     : 1870, 5.8%
+(mean count < 4)
+2388 DEGs
+```
+Can also do Independent hypothesis weighting, another method to obtain adjusted pvalue, more stringent tho... (do it when time, need troubleshoot ```BiocManager::install("IHW")``` installation!)
+
+
+4. Data vizualization
+*plotMA* LFC variable over the mean of normalized counts for all the samples in the DESeqDataSet. Points will be colored red if the adjusted p value is less than 0.1.\
+Better to do it on shrunken log2 fold changes (as it remove noise associated with LFC from low count genes).
+```R
+plotMA(resLFC, ylim=c(-2,2))
+```
+**troubleshooting:** Looks like X11 is disabled using ```capabilities()```\
+```
+Error in .External2(C_X11, d$display, d$width, d$height, d$pointsize,  :
+  unable to start device X11cairo
+In addition: Warning message:
+In (function (display = "", width, height, pointsize, gamma, bg,  :
+  unable to open connection to X11 display ''
+```
+
+Lets **back up all files** to come back later after troubleshooting X11:
+```R
+write.table(res,file="DESeq2/test") # save as matrix
+write.table(resLFC,file="DESeq2/resLFC") # save as matrix
+write.table(counts_all_matrix,file="DESeq2/counts_all_matrix") # save as matrix
+res = read.table("DESeq2/res",header=TRUE,row.names=1) # load matrix
+resLFC = read.table("DESeq2/resLFC",header=TRUE,row.names=1) # load matrix
+counts_all_matrix = read.table("DESeq2/counts_all_matrix",header=TRUE,row.names=1) # load matrix
 ```
 
 
+*PCA plot*
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+There is many other plot, explore [doc](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#count-matrix-input) to know more.
 
 
 
