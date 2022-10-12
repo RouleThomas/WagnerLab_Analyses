@@ -221,10 +221,11 @@ plotPCA -in SDG_WT_matrix.npz \
     -o plotPCA_SDG_WT.png \
     -T "PCA of read counts in gene"
 ```
-Launched as ```sbatch scripts/plot_PCA.sh```; Submitted batch job 200580=XXX
+Launched as ```sbatch scripts/plot_PCA.sh```; Submitted batch job 200580=DONE. Replicate two is weird, maybe explain why it has a different name since the begining...! 
 
 
-**Conclusion:** Use XXX for Deseq2
+
+**Conclusion:** Use WT Rep1 and Rep3 and RNAi Rep1 and Rep2 for Deseq2
 
 ## Generation of the coverage (wig) files ##
 --> Generate coverage file (bigwig)from bam file
