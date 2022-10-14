@@ -362,7 +362,35 @@ bedtools intersect -a data/macs2_out/chipPeaks/broad_gsMask_qval10/H3K27me3_pool
 
 
 ## 4. Annotate peaks to genes ##
+Let's use [ChIPseeker](https://academic.oup.com/bioinformatics/article/31/14/2382/255379) to assign peak to genes:\
+Lets create a specific ChIPseeker conda environment, to make sure I do not mess up my DESeq2 environment...\
+1. Create a conda environment with all R capabilities TRUE; For that let's copy our DESeq2 conda environment specificity where everythings fine 
 
+```bash
+conda activate DESeq2
+conda list --explicit > spec-file-DESeq2.txt # That is all our spec from the current conda env (here DESeq2)
+conda create --name ChIPseeker --file spec-file-DESeq2.txt # Here create environment based on DESeq2 env spec files
+```
+**`conda list --explicit > spec-file-DESeq2.txt` is great command to backup environment**
+
+
+2. Install ChIPseeker package in R
+```R
+BiocManager::install("ChIPseeker")
+```
+**troubleshooting solution:** `Configuration failed because libudunits2.so was not found`; lets install it using `conda install udunits2`.
+**troubleshooting solution:** `configure: error: sf is not compatible with GDAL versions below 2.0.1`; lets install it using `conda install r-sf`.
+```R
+library("ChIPseeker")
+```
+WORK!! see for next:
+https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html
+https://www.hdsu.org/chipatac2020/06_CHIP_PeakAnnotation.html
+
+
+
+Follow [this](https://github.com/sklasfeld/ChIP_Annotation) method\
+--> Proceed with the tutorial to understand what s going on
 
 
 
@@ -380,3 +408,4 @@ bedtools intersect -a data/macs2_out/chipPeaks/broad_gsMask_qval10/H3K27me3_pool
 
 Minor issues:
 - Mapping only work on node01 or node03
+- 
