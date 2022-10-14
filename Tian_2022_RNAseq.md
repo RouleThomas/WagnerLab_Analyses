@@ -448,7 +448,11 @@ Can also do Independent hypothesis weighting, another method to obtain adjusted 
 
 
 4. Data vizualization
-***plotMA*** LFC variable over the mean of normalized counts for all the samples in the DESeqDataSet. Points will be colored red if the adjusted p value is less than 0.1.\
+
+*There is many other plot, explore [doc](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#count-matrix-input) to know more.*\
+Here, let's focus on plotMA and PCA
+
+***plotMA to broadly show there is many DEGs*** LFC variable over the mean of normalized counts for all the samples in the DESeqDataSet. Points will be colored red if the adjusted p value is less than 0.1.\
 Better to do it on shrunken log2 fold changes (as it remove noise associated with LFC from low count genes).
 ```R
 plotMA(resLFC, ylim=c(-2,2))
@@ -471,18 +475,74 @@ resLFC = read.table("DESeq2/resLFC",header=TRUE,row.names=1) # load matrix
 counts_all_matrix = read.table("DESeq2/counts_all_matrix",header=TRUE,row.names=1) # load matrix
 ```
 **troubleshooting solution:** In R type ```Sys.setenv("DISPLAY"=":0.0")``` exit and re-launch: SOLVED, X11 is TRUE
-Re back up all files and launch:
+**troubleshooting:** The bug came back!!! It may be because I am on node04 ! To specify node to use: ```srun --nodelist=node01 --mem=20g --pty bash -l```. That also fail...
+**troubleshooting solution:** It run doing the following:
+1. srun --x11 --nodelist=node03 --mem=20g --pty bash -l
+2. conda activate DESeq2
+3. R
+4. From here I add to reinstall ```BiocManager::install("Matrix", "codetools", "survival")``` and `tidyverse`, before being able load DESeq2 (I think because I am on node03, looks like installation occur here `/home/roule/R/node03/4.2.0/`
+
+Need to tidy the `resLFC` data to work with plotMA:
 ```R
-plotMA(resLFC, ylim=c(-2,2))
+resLFC %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE)) %>%
+plotMA(., ylim=c(-2,2)) # Make MA PLOT
+
+# 3 step to save the plot, open PDF, make the plot, close to save
+pdf("DESeq2/plotMA_resLFC.pdf", width=5, height=4)
+plotMA(resLFC %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE)), ylim=c(-2,2))
+dev.off()
 ```
 
-***PCA plot***
+***PCA plot to show clustering of our samples***
+```R
+library('pheatmap') 
+dds <- estimateSizeFactors(dds) # Re-generate dds if needed (import file and run DESeqDataSetFromMatrix)
+select <- order(rowMeans(counts(dds,normalized=TRUE)),
+                decreasing=TRUE)[1:20]
+		
+df <- as.data.frame(colData(dds)[c("genotype")]) #  If multiple parameter, like treatment; use: df <- as.data.frame(colData(dds)[,c("genotype","treatment")]) 
+ntd <- normTransform(dds) # This transform/normalize counts into log2(n + 1) (shifting logarithm transformation)
 
-There is many other plot, explore [doc](http://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html#count-matrix-input) to know more.
+# Generate the heatmap in pdf
+pdf("DESeq2/heatmap_LogShiftTransformation.pdf", width=5, height=6)
+pheatmap(assay(ntd)[select,], cluster_rows=FALSE, show_rownames=FALSE,
+         cluster_cols=FALSE, annotation_col=df)
+dev.off()
+```
+*Here I show logarithm shift transformation but can also do heatmap with: the regularized log transformation and the variance stabilizing transformation*\
+
+It looks like people use variance stablilizing transform to show heatmap and PCA, so lets use that instead:
+```R
+# normalize data
+vsd = varianceStabilizingTransformation(dds)
+
+# heatmap
+pdf("DESeq2/heatmap_varianceStabilizingTransformation.pdf", width=5, height=6)
+pheatmap(assay(vsd)[select,], cluster_rows=FALSE, show_rownames=FALSE,
+         cluster_cols=FALSE, annotation_col=df)
+dev.off()
+
+# clustering heatmap
+sampleDists <- dist(t(assay(vsd)))
+library("RColorBrewer")
+sampleDistMatrix <- as.matrix(sampleDists)
+rownames(sampleDistMatrix) <- paste(vsd$genotype) # if multiple factor:  paste(vsd$genotype, vsd$treatment, sep="-")
+colnames(sampleDistMatrix) <- paste(vsd$genotype)
+colors <- colorRampPalette( rev(brewer.pal(9, "Blues")) )(255)
+
+# plot
+pdf("DESeq2/heatmap_cluster_varianceStabilizingTransformation.pdf", width=5, height=6)
+pheatmap(sampleDistMatrix,
+         clustering_distance_rows=sampleDists,
+         clustering_distance_cols=sampleDists,
+         col=colors)
+dev.off()
+
+# PCA 
+pdf("DESeq2/PCA_varianceStabilizingTransformation.pdf", width=5, height=6)
+plotPCA(vsd, intgroup=c("genotype"))
+dev.off()
+```
 
 
-
-
-
-
-
+## Conclusion RNAseq ##: DEGs has been generated, to combine with ChIP peaks to find direct PRC2 targets. Overall RNAseq quality looks good (clustering, heatmap, number of DEGs).
