@@ -492,6 +492,7 @@ pdf("DESeq2/plotMA_resLFC.pdf", width=5, height=4)
 plotMA(resLFC %>% as.data.frame() %>% select("baseMean", "log2FoldChange", "padj") %>% mutate(padj = ifelse(padj <= 0.05, TRUE, FALSE)), ylim=c(-2,2))
 dev.off()
 ```
+![plot](https://github.com/RouleThomas/WagnerLab_Analyses/blob/main/data_RNAseq/DESeq2/plotMA_resLFC.pdf)
 
 ***PCA plot to show clustering of our samples***
 ```R
@@ -510,6 +511,7 @@ pheatmap(assay(ntd)[select,], cluster_rows=FALSE, show_rownames=FALSE,
 dev.off()
 ```
 *Here I show logarithm shift transformation but can also do heatmap with: the regularized log transformation and the variance stabilizing transformation*\
+![plot](https://github.com/RouleThomas/WagnerLab_Analyses/blob/main/data_RNAseq/DESeq2/PCA_varianceStabilizingTransformation.pdf)
 
 It looks like people use variance stablilizing transform to show heatmap and PCA, so lets use that instead:
 ```R
@@ -543,6 +545,6 @@ pdf("DESeq2/PCA_varianceStabilizingTransformation.pdf", width=5, height=6)
 plotPCA(vsd, intgroup=c("genotype"))
 dev.off()
 ```
-
+![plot](https://github.com/RouleThomas/WagnerLab_Analyses/blob/main/data_RNAseq/DESeq2/heatmap_cluster_varianceStabilizingTransformation.pdf)
 
 ## Conclusion RNAseq ##: DEGs has been generated, to combine with ChIP peaks to find direct PRC2 targets. Overall RNAseq quality looks good (clustering, heatmap, number of DEGs).
