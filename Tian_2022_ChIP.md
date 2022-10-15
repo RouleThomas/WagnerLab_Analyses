@@ -382,8 +382,52 @@ BiocManager::install("ChIPseeker")
 **troubleshooting solution:** `configure: error: sf is not compatible with GDAL versions below 2.0.1`; lets install it using `conda install r-sf`.
 ```R
 library("ChIPseeker")
+library("GenomicRanges") # BiocManager::install("GenomicRanges")
 ```
-WORK!! see for next:
+WORK!!\
+Import and tidy hIP peaks (narrow for EMF2, broad for H3K27me3):
+```R
+# Import
+peaks_EMF2 =  read.table('data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak') %>% rename(Chr=V1, Start=V2, End=V3, name=V4, length=V5, Strand=V6, fold_enrichment=V7, minus_log10_pvalue=V8, minus_log10_qvalue=V9, pileup=V10) # Import and rename columns
+
+# Tidy peaks
+peaks.gr = makeGRangesFromDataFrame(peaks_EMF2,keep.extra.columns=TRUE)
+
+# Quick stat (peak per chr)
+table(as.character(seqnames(peaks.gr)))
+
+chr01 chr02 chr03 chr04 chr05 chr06 chr07 chr08 chr09 chr10 chr11 chr12
+ 2017  1535  1643  1224  1163  1097  1106  1011   862   783   878   801
+ 
+ # plot (coverage distribution over genome)
+ pdf('data/ChIPseeker/EMF2_coverage.pdf')
+ covplot(peaks.gr,weightCol='fold_enrichment')
+ dev.off()
+
+# plot (density over promoter)
+## define promoter regions
+promoter = getPromoters(TxDb=txdb, upstream=2500, downstream=200) # XXX replace txdb per our gtf I think
+
+## get the reads around the TSS regions
+tagMatrix = getTagMatrix(peaks.gr, windows=promoter)
+
+## plot this as density heatmap
+pdf('data/ChIPseeker/EMF2_heatmap.pdf')
+tagHeatmap(tagMatrix, xlim=c(-2500, 200), color="red")
+dev.off()
+
+
+```
+
+
+
+
+## Not sure about column name for peaks file, XXX to double check!!! ##
+
+
+
+
+see for next:
 https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html
 https://www.hdsu.org/chipatac2020/06_CHIP_PeakAnnotation.html
 
