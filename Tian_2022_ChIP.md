@@ -479,13 +479,20 @@ plotAvgProf(tagMatrix, xlim=c(-3000, 500), conf=0.95,resample=500, facet="row") 
 dev.off()
 
 # Annotate peak to genes
-peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb)
 peak.anno = as.data.frame(peakAnno)
 write.table(peak.anno,file='data/ChIPseeker/EMF2_peaks.anno.csv',row.names=FALSE,quote=FALSE,sep='\t') # Save table
 
 # Check distribution plot relative to features
 pdf('data/ChIPseeker/EMF2_distribution.pdf')
 plotAnnoPie(peakAnno)
+dev.off()
+
+# Check distribution to gene
+pdf('data/ChIPseeker/EMF2_distribution_gene.pdf')
+plotPeakProf2(peak = peaks.gr, upstream = rel(0.2), downstream = rel(0.2),
+              conf = 0.95, by = "gene", type = "body", nbin = 100,
+              TxDb = txdb, ignore_strand = F) # nbin = filter out peak smaller than 100
 dev.off()
 ```
 
@@ -514,15 +521,97 @@ plotAvgProf(tagMatrix, xlim=c(-3000, 500), conf=0.95,resample=500, facet="row") 
 dev.off()
 
 # Annotate peak to genes
-peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb)
 peak.anno = as.data.frame(peakAnno)
-write.table(peak.anno,file='data/ChIPseeker/EMF2_peaks.anno.csv',row.names=FALSE,quote=FALSE,sep='\t') # Save table
+write.table(peak.anno,file='data/ChIPseeker/H3K27me3_peaks.anno.csv',row.names=FALSE,quote=FALSE,sep='\t') # Save table
 
 # Check distribution plot relative to features
-pdf('data/ChIPseeker/EMF2_distribution.pdf')
+pdf('data/ChIPseeker/H3K27me3_distribution.pdf')
 plotAnnoPie(peakAnno)
 dev.off()
+
+# Check distribution to gene
+pdf('data/ChIPseeker/H3K27me3_distribution_gene.pdf')
+plotPeakProf2(peak = peaks.gr, upstream = rel(0.2), downstream = rel(0.2),
+              conf = 0.95, by = "gene", type = "body", nbin = 100,
+              TxDb = txdb, ignore_strand = F)
+dev.off()
 ```
+Lets  try to do venn diagram to see overlap EMF2 and H3K27me3 related to genes annotation follow [this](http://bioconductor.org/packages/devel/bioc/vignettes/ChIPseeker/inst/doc/ChIPseeker.html)
+```R
+# Provide path as list for H3k27me3 and EMF2 peaks
+files <- list(EMF2 = "data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak", H3K27me3 = "data/macs2_out/chipPeaks/broad_gsMask_qval10/H3K27me3_pool_peaks.broadPeak")
+
+peakAnnoList <- lapply(files, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 500), verbose=FALSE)
+```
+**troubleshoot solution:** It fail as files and txdb not have similar seqname under grange... Lets correct
+```R
+## For EMF2 ##
+# import 
+peaks_EMF2 =  read.table('data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9, peak=V10)
+ 
+#dataframe for correct chromosome name
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+                  
+# join and select
+peaks_EMF2_chrValues = peaks_EMF2 %>% left_join(chr_label) %>% dplyr::select(-Chr) %>% dplyr::select(chr, everything()) # join both dataframe, remove the previous bad Chr label and put the new chr label as first column
+
+# save 
+write.table(peaks_EMF2_chrValues,file='data/ChIPseeker/peaks_EMF2_chrValues',row.names=FALSE,quote=FALSE,sep='\t') # Save table
+
+
+## For H3K27me3 ##
+# import 
+peaks_H3K27me3 =  read.table('data/macs2_out/chipPeaks/broad_gsMask_qval10/H3K27me3_pool_peaks.broadPeak') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) # no column 10 peak when call --broad
+
+ 
+#dataframe for correct chromosome name
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+                  
+# join and select
+peaks_H3K27me3_chrValues = peaks_H3K27me3 %>% left_join(chr_label) %>% dplyr::select(-Chr) %>% dplyr::select(chr, everything()) # join both dataframe, remove the previous bad Chr label and put the new chr label as first column
+
+# save 
+write.table(peaks_H3K27me3_chrValues,file='data/ChIPseeker/peaks_H3K27me3_chrValues',row.names=FALSE,quote=FALSE,sep='\t') # Save table
+
+## Provide path as list for H3k27me3 and EMF2 peaks ##
+files <- list(EMF2 = "data/ChIPseeker/peaks_EMF2_chrValues", H3K27me3 = "data/ChIPseeker/peaks_H3K27me3_chrValues")
+
+peakAnnoList <- lapply(files, annotatePeak, TxDb=txdb,
+                       tssRegion=c(-3000, 500), verbose=FALSE)
+```
+We can make some graph for comparison:
+```R
+# plotAnnoBar
+pdf('data/ChIPseeker/plotAnnoBar_comparison.pdf')
+plotAnnoBar(peakAnnoList)
+dev.off()
+
+# plotDistToTSS
+pdf('data/ChIPseeker/plotDistToTSS_comparison.pdf')
+plotDistToTSS(peakAnnoList)
+dev.off()
+```
+Check overlap between peaks and annotated genes
+```R
+genes= lapply(peakAnnoList, function(i) as.data.frame(i)$geneId)
+
+pdf('data/ChIPseeker/venn_peaks_genes_comparison.pdf')
+vennplot(genes)
+dev.off()
+```
+Check signficance overlap between peaks and annotated genes
+```R
+enrichPeakOverlap(queryPeak = "data/ChIPseeker/peaks_H3K27me3_chrValues", targetPeak = "data/ChIPseeker/peaks_EMF2_chrValues", nShuffle=1000, TxDb = txdb , pAdjustMethod="BH", chainFile=NULL)
+```
+
+
+
 
 
 
