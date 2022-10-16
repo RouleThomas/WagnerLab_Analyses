@@ -382,13 +382,14 @@ BiocManager::install("ChIPseeker")
 **troubleshooting solution:** `configure: error: sf is not compatible with GDAL versions below 2.0.1`; lets install it using `conda install r-sf`.
 ```R
 library("ChIPseeker")
+library("tidyverse")
 library("GenomicRanges") # BiocManager::install("GenomicRanges")
 ```
 WORK!!\
-Import and tidy hIP peaks (narrow for EMF2, broad for H3K27me3):
+Import and tidy ChIP peaks (narrow for EMF2, broad for H3K27me3):
 ```R
 # Import
-peaks_EMF2 =  read.table('data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak') %>% rename(Chr=V1, Start=V2, End=V3, name=V4, length=V5, Strand=V6, fold_enrichment=V7, minus_log10_pvalue=V8, minus_log10_qvalue=V9, pileup=V10) # Import and rename columns
+peaks_EMF2 =  read.table('data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9, peak=V10) # Import and rename columns
 
 # Tidy peaks
 peaks.gr = makeGRangesFromDataFrame(peaks_EMF2,keep.extra.columns=TRUE)
@@ -403,26 +404,138 @@ chr01 chr02 chr03 chr04 chr05 chr06 chr07 chr08 chr09 chr10 chr11 chr12
  pdf('data/ChIPseeker/EMF2_coverage.pdf')
  covplot(peaks.gr,weightCol='fold_enrichment')
  dev.off()
+ ```
+ 
+**troubleshoot:** Trouble to make the txdb format, tried from either GTF or grange file result in the same error
+```R
+# prepare packages
+library('tracklayer')
+library('checkr') # install.packages("checkr")
+source("scripts/makeTxDbFromGRanges.R") # load 'makeTxDbFromGRanges' function
+source("scripts/makeTxDb.R") # # load 'makeTxDb' function
 
-# plot (density over promoter)
-## define promoter regions
-promoter = getPromoters(TxDb=txdb, upstream=2500, downstream=200) # XXX replace txdb per our gtf I think
+# import gtf and transform into grange file
+gr <- import("../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf")
 
-## get the reads around the TSS regions
+# make txdb from grange
+txdb <- makeTxDbFromGRanges(gr)
+
+# make txdb from grange only transcript metafeature
+gr <- import("../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gtf") # import gtf as grange file
+gr_transcript = gr[ gr$type == "transcript" ] # keep only transcript feature
+txdb <- makeTxDbFromGRanges(gr_transcript)
+
+#make txdb from ensembl
+library('RMariaDB') # BiocManager::install("RMariaDB")
+source("scripts/Ensembl-utils.R")
+library(RCurl) # install.packages("RCurl")
+
+
+# mke txdb from gtf directly 
+txdb <- makeTxDbFromGFF("../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.gtf", format= "gtf")
+```
+FAIL: Same error message obtain: `Make the TxDb object ... Error: exclusive must be a flag`; cannot find anything on internet...
+Check how look a `txdb` format using `BiocManager::install("TxDb.Hsapiens.UCSC.hg19.knownGene")`
+ 
+**troubleshoot solution:** Generate txdb from Biomart db work! see [here](https://support.bioconductor.org/p/100772/)
+ ```R
+ # Import the txdb
+ txdb <- makeTxDbFromBiomart(biomart="plants_mart",
+                            dataset="osativa_eg_gene",
+                            host="plants.ensembl.org")
+                            
+ # define promoter regions as +/- 3kb/500bp
+ promoter = getPromoters(TxDb=txdb, upstream=3000, downstream=500)
+
+## get the reads around the promoter regions
+tagMatrix = getTagMatrix(peaks.gr, windows=promoter)
+ ```
+ **troubleshoot solution:** chromosome name for `peaks.gr` (*chr01*) and `promoter` (*1*) are not the same, change promoter into 1. Change the `peaks.gr` file accordingly
+ ```R
+# import 
+peaks_EMF2 =  read.table('data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9, peak=V10)
+ 
+#dataframe for correct chromosome name
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+                  
+# join and select
+peaks_EMF2_chrValues = peaks_EMF2 %>% left_join(chr_label) %>% dplyr::select(-Chr) %>% dplyr::select(chr, everything()) # join both dataframe, remove the previous bad Chr label and put the new chr label as first column
+
+peaks.gr = makeGRangesFromDataFrame(peaks_EMF2_chrValues,keep.extra.columns=TRUE)
+ 
+# get the reads around the promoter regions
 tagMatrix = getTagMatrix(peaks.gr, windows=promoter)
 
-## plot this as density heatmap
+# plot this as density heatmap
 pdf('data/ChIPseeker/EMF2_heatmap.pdf')
-tagHeatmap(tagMatrix, xlim=c(-2500, 200), color="red")
+tagHeatmap(tagMatrix, xlim=c(-3000, 500), color="red")
 dev.off()
 
+# plot this as profile plot
+pdf('data/ChIPseeker/EMF2_plotAvgProf.pdf')
+plotAvgProf(tagMatrix, xlim=c(-3000, 500), conf=0.95,resample=500, facet="row") # confidence interval is estimated by bootstrap method (500 iterations)
+dev.off()
 
+# Annotate peak to genes
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb
+peak.anno = as.data.frame(peakAnno)
+write.table(peak.anno,file='data/ChIPseeker/EMF2_peaks.anno.csv',row.names=FALSE,quote=FALSE,sep='\t') # Save table
+
+# Check distribution plot relative to features
+pdf('data/ChIPseeker/EMF2_distribution.pdf')
+plotAnnoPie(peakAnno)
+dev.off()
+```
+
+Now lets do the same for **H3K27me3 broad** peaks:
+ ```R
+# import 
+peaks_H3K27me3 =  read.table('data/macs2_out/chipPeaks/broad_gsMask_qval10/H3K27me3_pool_peaks.broadPeak') %>% rename(Chr=V1, start=V2, end=V3, name=V4, score=V5, strand=V6, signal_value=V7, pvalue=V8, qvalue=V9) # no column 10 peak when call --broad
+
+ 
+#dataframe for correct chromosome name
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+                  
+# join and select
+peaks_H3K27me3_chrValues = peaks_H3K27me3 %>% left_join(chr_label) %>% dplyr::select(-Chr) %>% dplyr::select(chr, everything()) # join both dataframe, remove the previous bad Chr label and put the new chr label as first column
+
+peaks.gr = makeGRangesFromDataFrame(peaks_H3K27me3_chrValues,keep.extra.columns=TRUE)
+ 
+# get the reads around the promoter regions
+tagMatrix = getTagMatrix(peaks.gr, windows=promoter)
+
+# plot this as profile plot
+pdf('data/ChIPseeker/H3K27me3_plotAvgProf.pdf')
+plotAvgProf(tagMatrix, xlim=c(-3000, 500), conf=0.95,resample=500, facet="row") # confidence interval is estimated by bootstrap method (500 iterations)
+dev.off()
+
+# Annotate peak to genes
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb
+peak.anno = as.data.frame(peakAnno)
+write.table(peak.anno,file='data/ChIPseeker/EMF2_peaks.anno.csv',row.names=FALSE,quote=FALSE,sep='\t') # Save table
+
+# Check distribution plot relative to features
+pdf('data/ChIPseeker/EMF2_distribution.pdf')
+plotAnnoPie(peakAnno)
+dev.off()
 ```
 
 
 
+ 
+ 
+ Need convert GTF into txdb format [this](https://rdrr.io/bioc/GenomicFeatures/man/makeTxDbFromGRanges.html) R function.
 
-## Not sure about column name for peaks file, XXX to double check!!! ##
+
+
+
+
+
+
 
 
 
