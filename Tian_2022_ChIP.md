@@ -406,7 +406,8 @@ chr01 chr02 chr03 chr04 chr05 chr06 chr07 chr08 chr09 chr10 chr11 chr12
  dev.off()
  ```
  
-**troubleshoot:** Trouble to make the txdb format, tried from either GTF or grange file result in the same error
+**troubleshoot:** Trouble to make the txdb format, tried from either GTF or grange file result in the same error\
+Need convert GTF into txdb format [this](https://rdrr.io/bioc/GenomicFeatures/man/makeTxDbFromGRanges.html) R function.
 ```R
 # prepare packages
 library('tracklayer')
@@ -601,23 +602,70 @@ Check overlap between peaks and annotated genes
 ```R
 genes= lapply(peakAnnoList, function(i) as.data.frame(i)$geneId)
 
+# Venn diagram 
 pdf('data/ChIPseeker/venn_peaks_genes_comparison.pdf')
 vennplot(genes)
 dev.off()
+
+# Extract overlapping peaks
+as_tibble(do.call(cbind, genes)) 
+overlap_genes = intersect(genes$EMF2, genes$H3K27me3) %>% as_tibble() %>% unique() # Table of EMF2 and H3K27me3 bound genes
+
+## Extract EMF2 peaks corresponding to these genes
+# Import tidy
+peaks_EMF2_chrValues = peaks_EMF2 %>% left_join(chr_label) %>% dplyr::select(-Chr) %>% dplyr::select(chr, everything()) # join both dataframe, remove the previous bad Chr label and put the new chr label as first column
+peaks.gr = makeGRangesFromDataFrame(peaks_EMF2_chrValues,keep.extra.columns=TRUE)
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb)
+peak.anno = as_tibble(peakAnno)
+
+# isolate EMF2 peak overlap genes and reorder as bed file with peak coordinate
+overlap_genes_EMF2 = overlap_genes %>% rename(geneId=value) %>% left_join(peak.anno) %>% dplyr::select(seqnames, start, end, geneId, name, score, signal_value, pvalue, qvalue, peak, annotation, geneChr, geneStart, geneEnd, geneLength, geneStrand, transcriptId, distanceToTSS) %>% rename(chr=seqnames)
+
+# Export
+write.table(overlap_genes_EMF2, file="data/ChIPseeker/overlap_genes_EMF2_complete.bed",row.names=FALSE,quote=FALSE,sep='\t')
+write.table(overlap_genes_EMF2 %>% dplyr::select(chr,start,end), file="data/ChIPseeker/overlap_genes_EMF2.bed",row.names=FALSE,quote=FALSE,sep='\t')
 ```
-Check signficance overlap between peaks and annotated genes
+Check signficance overlap between peaks and annotated genes (in both direction)
 ```R
 enrichPeakOverlap(queryPeak = "data/ChIPseeker/peaks_H3K27me3_chrValues", targetPeak = "data/ChIPseeker/peaks_EMF2_chrValues", nShuffle=1000, TxDb = txdb , pAdjustMethod="BH", chainFile=NULL)
+enrichPeakOverlap(queryPeak = "data/ChIPseeker/peaks_EMF2_chrValues", targetPeak = "data/ChIPseeker/peaks_H3K27me3_chrValues", nShuffle=500, TxDb = txdb , pAdjustMethod="BH", chainFile=NULL)
+```
+Output (500 bootstrap last ~1h): 
+Direction (targetPeak=EMF2); significant: `                   qSample              tSample qLen  tLen N_OL      pvalue
+1 peaks_H3K27me3_chrValues peaks_EMF2_chrValues 5830 14120 5487 0.002364066
+     p.adjust
+1 0.002364066
+`
+Direction (targetPeak=H3K27me3):
+`
+1 peaks_EMF2_chrValues peaks_H3K27me3_chrValues 14120 5830 5487 0.002105263
+     p.adjust
+1 0.002105263
+`
+
+
+**Conclusion ChIPseeker:**
+- Annotation peak to gene is done.
+- Binding profile has been check (EMF2 is center to TSS whereas H3K27me3 is within gene body)
+- Overlap EMF2 and H3K27me3 (related to peak in gene) has been check: significant overlap
+
+
+## Motif discovery with MEME ##
+Check [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html) for help\
+Let's do **MEME-CHIP** (specifically design for ChIP, combine  DREME (motif discovery) and Tomtom (check if motif ressemble known TF))\
+First need a FASTA containing sequence of our peaks. Let's focus on the EMF2 peaks from the genes that are enriched in H3K27me3\
+Convert bed to FASTA, see [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/motif_analysis_prep.html)
+```bash
+XXX
 ```
 
 
 
 
 
-
  
  
- Need convert GTF into txdb format [this](https://rdrr.io/bioc/GenomicFeatures/man/makeTxDbFromGRanges.html) R function.
+ 
 
 
 
