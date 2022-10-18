@@ -651,15 +651,106 @@ Direction (targetPeak=H3K27me3):
 
 
 ## Motif discovery with MEME ##
-Check [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html) for help\
+Check [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html) and [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/motif_analysis_prep.html) for help\
 Let's do **MEME-CHIP** (specifically design for ChIP, combine  DREME (motif discovery) and Tomtom (check if motif ressemble known TF))\
-First need a FASTA containing sequence of our peaks. Let's focus on the EMF2 peaks from the genes that are enriched in H3K27me3\
-Convert bed to FASTA, see [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/motif_analysis_prep.html)
-```bash
-XXX
+First need a FASTA containing sequence of our peaks. Let's focus on the EMF2 peaks from the genes that are enriched in H3K27me3 and DEGs\
+Let's isolate these peaks in R:
+```R
+# import files
+peaks_overlap =  read_delim('data/ChIPseeker/overlap_genes_EMF2_complete.bed')
+peaks_overlap_tidy =  peaks_overlap %>% dplyr::select(chr, start, end, name, score, signal_value, qvalue, peak, geneId, distanceToTSS, annotation)
+
+DEGs = read_delim('../Tian_2022TPC_RNAseq/DESeq2/raw_table.txt') %>% filter(padj<0.05) %>% dplyr::select(gene, baseMean, log2FoldChange, padj)
+DEGs_tidy = DEGs %>% separate(gene, c("deleteme", "geneId"), sep=":") # remove "gene:" on gene column
+
+# Combine DEGs with peaks overlap
+DEGs_peakoverlap = DEGs_tidy %>% inner_join(peaks_overlap_tidy) %>% dplyr::select(chr, start, end, name, score, signal_value, qvalue, peak, distanceToTSS, annotation, geneId, baseMean, log2FoldChange, padj) # Tidy the order as bed
+
+# Export the clean bed table (plus a version with chromsome name matching the FASTA file)
+write.table(DEGs_peakoverlap, file="data/ChIPseeker/DEGs_peakoverlap.bed",row.names=FALSE,quote=FALSE,sep='\t')
+
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)   )
+
+DEGs_peakoverlap_tidy = DEGs_peakoverlap %>% left_join(chr_label) %>% dplyr::select(Chr, start, end, name, score, signal_value, qvalue, peak, distanceToTSS, annotation, geneId, baseMean, log2FoldChange, padj) # Tidy the order as bed
+                  
+write.table(DEGs_peakoverlap_tidy, file="data/ChIPseeker/DEGs_peakoverlap_tidy.bed",row.names=FALSE,quote=FALSE,sep='\t')
 ```
 
+Vizualize peak distribution of these specific overlapping one, to compare with what I obtain broadly (EMF2 peaks solely) : XXX
+```R
+library(ChIPseeker)
+library(tidyverse)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 
+txdb <- makeTxDbFromBiomart(biomart="plants_mart",
+                            dataset="osativa_eg_gene",
+                            host="plants.ensembl.org")
+                            
+# define promoter regions as +/- 3kb/500bp
+promoter = getPromoters(TxDb=txdb, upstream=3000, downstream=500)
+
+DEGs_peakoverlap =  read_delim('data/ChIPseeker/DEGs_peakoverlap.bed')
+
+
+peaks.gr = makeGRangesFromDataFrame(DEGs_peakoverlap,keep.extra.columns=TRUE)
+
+# Annotate peak to genes
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb)
+
+# Check distribution plot relative to features
+pdf('data/ChIPseeker/DEGs_peakoverlap_distribution.pdf')
+plotAnnoPie(peakAnno)
+dev.off()
+
+# Check distribution to gene
+pdf('data/ChIPseeker/DEGs_peakoverlap_distribution_gene.pdf')
+plotPeakProf2(peak = peaks.gr, upstream = rel(0.2), downstream = rel(0.2),
+              conf = 0.95, by = "gene", type = "body", nbin = 100,
+              TxDb = txdb, ignore_strand = F)
+dev.off()
+```
+Usfell R function/package; biomaRt; can be found [here](https://github.com/grimbough/biomaRt)\
+
+Convert bed to FASTA to be use in MEME-CHIP 
+```bash
+bedtools getfasta [OPTIONS] -fi <input FASTA> -bed <BED/GFF/VCF>
+
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/DEGs_peakoverlap_tidy_noheader.bed -fo data/ChIPseeker/DEGs_peakoverlap_tidy.fasta # BED header as been removed with manual editing
+```
+**MEME-CHIP:** The lenght of our DNA sequence is too long (505 DNA sequences, between 280 and 22325 in length (average length 2521.7)), should be 500bp to be optimal; so let's see wether size differ ~ features:
+```R
+library(tidyverse)
+DEGs_peakoverlap =  read_delim('data/ChIPseeker/DEGs_peakoverlap.bed')
+
+DEGs_peakoverlap_size = DEGs_peakoverlap %>% mutate(length = end-start) #obtain size of the peaks
+
+# plot
+ggplot(DEGs_peakoverlap_size %>% filter(annotation %in% c("Promoter (<=1kb)", "Promoter (1-2kb)", "Promoter (2-3kb)", "5' UTR","3' UTR", "Distal Intergenic", "Downstream (<=300bp)")), aes(annotation, length)) + geom_boxplot() + geom_hline(yintercept=500, linetype="dashed", color = "red", size=.5)
+
+# Isolate small (400-800bp) PRE, specific to promoter region (from 0 to 5000bp to TSS)
+DEGs_peakoverlap_size %>% filter(distanceToTSS %in% (0:5000), length %in% (400:800)) # n=34
+DEGs_peakoverlap_size %>% filter(distanceToTSS %in% (0:5000), length < 1000) # n=55
+DEGs_peakoverlap_size %>% filter(distanceToTSS %in% (0:5000), length < 1500) # n=104
+
+# Export all tables to be converted in FASTA
+## Tidy
+DEGs_peakoverlap_size_400800 = DEGs_peakoverlap_size %>% filter(distanceToTSS %in% (0:5000), length %in% (400:800)) %>% left_join(chr_label) %>% dplyr::select(Chr, start, end, name, score, signal_value, qvalue, peak, distanceToTSS, annotation, geneId, baseMean, log2FoldChange, padj) # Tidy the order as bed
+DEGs_peakoverlap_size_Less1000 = DEGs_peakoverlap_size %>% filter(distanceToTSS %in% (0:5000), length < 1000) %>% left_join(chr_label) %>% dplyr::select(Chr, start, end, name, score, signal_value, qvalue, peak, distanceToTSS, annotation, geneId, baseMean, log2FoldChange, padj) # Tidy the order as bed
+DEGs_peakoverlap_size_Less1500 = DEGs_peakoverlap_size %>% filter(distanceToTSS %in% (0:5000), length < 1500) %>% left_join(chr_label) %>% dplyr::select(Chr, start, end, name, score, signal_value, qvalue, peak, distanceToTSS, annotation, geneId, baseMean, log2FoldChange, padj) # Tidy the order as bed
+
+## Save
+write.table(DEGs_peakoverlap_size_400800, file="data/ChIPseeker/DEGs_peakoverlap_size_400800.bed",row.names=FALSE,quote=FALSE,sep='\t')
+write.table(DEGs_peakoverlap_size_Less1000, file="data/ChIPseeker/DEGs_peakoverlap_size_Less1000.bed",row.names=FALSE,quote=FALSE,sep='\t')
+write.table(DEGs_peakoverlap_size_Less1500, file="data/ChIPseeker/DEGs_peakoverlap_size_Less1500.bed",row.names=FALSE,quote=FALSE,sep='\t')
+```
+Convert bed to FASTA to be use in MEME-CHIP 
+```bash
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/DEGs_peakoverlap_size_400800_noheader.bed -fo data/ChIPseeker/DEGs_peakoverlap_size_400800.fasta # BED header as been removed with manual editing
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/DEGs_peakoverlap_size_Less1000_noheader.bed -fo data/ChIPseeker/DEGs_peakoverlap_size_Less1000_noheader.fasta
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/DEGs_peakoverlap_size_Less1500_noheader.bed -fo data/ChIPseeker/DEGs_peakoverlap_size_Less1500_noheader.fasta
+```
+**MEME-CHIP:** Best output is for the 400-800 filter, even though n smaller. Shows AP2 TF family enrichment notably and other C2C2...
 
 
 
