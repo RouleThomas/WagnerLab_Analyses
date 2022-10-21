@@ -7,6 +7,7 @@ conda create --name Image
 conda activate Image
 python
 ```
+Use `python COMAND.py` to see output directly
 
 ## Bases ##
 Video04-XXX\
@@ -24,6 +25,9 @@ cv2.waitKey(0)
 cv2.destroyAllWindows()
 ```
 To run python script, tape `python NAMESCRIPT.py`\
-**troubleshooting:** `No module named cv2`; so instal it `conda install opencv`
+**troubleshooting:** Module missing:
+- `No module named cv2`; so install it `conda install opencv`
+- ` No module named 'skimage'`; so install it `conda install scikit-image`
+- 
 
 maybe modify script to save image
