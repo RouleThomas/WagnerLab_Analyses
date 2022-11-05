@@ -192,7 +192,22 @@ a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]])
 b = np.array([[1,1,1,1]])
 print(a+b) # will add one to each rows of the a multidimensional array
 ```
+Now let's **read/modify an image with numpy**\
+```python
+## import libraries
+import numpy as np
+from imageio import imread, imsave
 
+## import image
+img = imread('images/Meristem_profile.jpg')
+
+print(img) # print array of the image
+print(img.dtype, img.shape) # print some image information; the last number is 3 as refer to red green blue
+
+## image manipulation
+img_tinted = img * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/tinted_Meristem_profile.jpg', img_tinted)
+```
 
 
 ```
