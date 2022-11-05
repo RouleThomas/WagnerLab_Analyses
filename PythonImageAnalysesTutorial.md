@@ -176,19 +176,31 @@ b = a[:,2] # print all rows but only the third columns
 np.array([a[0,0], a[1,1]]) # print number from 1st column first row and second column second row
 
 ```
---> slice need to be read as `a[ROW,COLUMN]`
-
+--> slice need to be read as `a[ROW,COLUMN]`\
+To do sum of two matrices:
+```python
+x = np.array([[1,2], [3,4]], dtype=np.float64) # adding data type is optional, here float64 refer to a numeric character with decimal
+y = np.array([[5,6], [7,8]], dtype=np.float64)
+print(x+y) # print sum of the two matrices
+print(np.add(x,y)) # same
+np.sum(x, axis = 0) # comput the sum of each columns; axis = 1 for each rows
+print(x.T) # transpose (column to rows and rows to column); usefull to invert color!
+```
+To do **broadcasting** = adding an array to a multidimensional array
+```python
+a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]) 
+b = np.array([[1,1,1,1]])
+print(a+b) # will add one to each rows of the a multidimensional array
+```
 
 
 
 ```
-
 # Usefull command: #
 - srun --x11 --nodelist=node03 --mem=20g --pty bash -l
 - type(VARIABLE) = say which type is it (integer, string,..)
 
-
-
+```
 
 
 
