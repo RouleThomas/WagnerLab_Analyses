@@ -209,7 +209,7 @@ img_tinted = img * [0., 1., 0.] # keep only the green; multiply per zero the oth
 imsave('images/tinted_Meristem_profile.jpg', img_tinted)
 ```
 
-
+ 
 ```
 # Usefull command: #
 - srun --x11 --nodelist=node03 --mem=20g --pty bash -l
