@@ -208,9 +208,53 @@ print(img.dtype, img.shape) # print some image information; the last number is 3
 img_tinted = img * [0., 1., 0.] # keep only the green; multiply per zero the other color
 imsave('images/tinted_Meristem_profile.jpg', img_tinted)
 ```
+--> We can play with color intensity of an image (keep only green; decrease other color...)
 
- 
+## for and while Loops ##
+
+```python
+while (count<10): 
+  print("The count is: ", count) # So here it will print that the count is "0"
+  count = count + 1 # here add +1 at the count
 ```
+Conversion C to F using **while**
+```python
+# F = 9/5C + 32
+
+C = -40
+while C<= 40:
+  F = ((9./5)*C) + 32
+  print(C,F)
+  C = C + 5
+```
+play with **break** in **loop** or **while**; to stop a loop or a while.
+```
+for letter in 'I love python':
+  if letter == 'p':
+    break # break the code if the letter is p
+  print("Current letter is: ", letter)
+```
+```
+a = 10
+while a>0:
+  print("Current value is: ", a)
+  a = a-1
+  if a==5:
+    break
+```
+```
+for num in range(10,20): # range start at 10 and exclude 20
+  if num%2 ==0: # when you divide your number per two, if your reminder is 0 = even number
+    print("%d is an even number" %(num))
+  else:
+    print("%d is an odd number" %(num))
+```
+
+## Python functions ##
+https://www.youtube.com/watch?v=sLc0O-8RpW0&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=15
+
+
+
 # Usefull command: #
 - srun --x11 --nodelist=node03 --mem=20g --pty bash -l
 - type(VARIABLE) = say which type is it (integer, string,..)
