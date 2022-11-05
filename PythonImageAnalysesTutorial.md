@@ -167,12 +167,16 @@ Here is an example to create a matrix with a desired number; could be use to cre
 ```python
 a = np.full((3,3), 5) # create a 3 column 3 rows matrix with value of 5
 ```
-Using **Slicing** to subset part of an image/pixel and do math
+Using **Slicing** to subset an array fron an array = part of an image/pixel
 ```python
 a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]) # generate a matrix 3 * 4 arrays (4 columns 3 rows)
+b = a[:2] # keep only the first 2 rows; same as --> a[0:2] 
+b = a[:, :2] # ":" print all rows, ":2" from only the two columns
+b = a[:,2] # print all rows but only the third columns
+np.array([a[0,0], a[1,1]]) # print number from 1st column first row and second column second row
 
 ```
-
+--> slice need to be read as `a[ROW,COLUMN]`
 
 
 
