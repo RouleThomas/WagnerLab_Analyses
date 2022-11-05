@@ -10,6 +10,8 @@ python
 Use `python COMAND.py` to see output directly. Use *CTRL+Z* to exit\
 to save image you can write clic on pic and save in jpg
 
+
+
 ## Bases ##
 Video04-XXX\
 
@@ -123,18 +125,62 @@ del fruit['apple'] # delete apple from our dictionnary
 ```
 
 
-## Numpy: Do math on a list = play with color (=do math) within an image (=list) ##
-Lecture 11; how multiply value within a list (as `a*3` output concatened list 3 times)
-https://www.youtube.com/watch?v=4uFs1qouPEI&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=12
+## Numpy: Do math on a list = "play with color (=do math) within an image (=list)" ##
+[Lecture 11](https://www.youtube.com/watch?v=4uFs1qouPEI&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=12)\
+how multiply value within a list (as `a*3` output our list concatenated 3 times)
+**Using loop:**
 ```python
-XXX
+a = [1,3,5,1,4] # create a list
+for i in a: # for each entry within the a list
+  print(i*2) # multiply per 2
 ```
+But result is not a list... To have list as output:
+```python
+a = [1,3,5,1,4] # create a list
+square = [] # create an empty list
+for i in a: # for each entry within the a list
+  square.append(i*2) # multiply per 2 the "square" variable and populate it with i*2
+  
+print(square)
+```
+Simplify **loop** to **comprehenssion**
+```python
+square = [i**2 for i in a]
+print(square)
+# this also give the same:
+print([i**2 for i in a])
+
+## Now if we want to give the square of only even number using ifelse
+square = [i**2 for i in a if i%2 == 0] # if you divide per two and the remainder is zero == "if i is an even number"
+print(square) # here only show the even number
+```
+Using **numpy**
+```python
+import numpy as np # import numpy library and call it using np
+
+a = [1,2,3,4,5,6]
+b = np.array(a) # convert the a list into a numpy array
+
+print(b * 2) # will multiply every element in a by 2 ! And not concatenated the list two times
+```
+Here is an example to create a matrix with a desired number; could be use to create a digital filter for an image (filter out pixel value over 5):
+```python
+a = np.full((3,3), 5) # create a 3 column 3 rows matrix with value of 5
+```
+Using **Slicing** to subset part of an image/pixel and do math
+```python
+a = np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]) # generate a matrix 3 * 4 arrays (4 columns 3 rows)
+
+```
+
+
 
 
 
 ```
 
 # Usefull command: #
+- srun --x11 --nodelist=node03 --mem=20g --pty bash -l
 - type(VARIABLE) = say which type is it (integer, string,..)
 
 
