@@ -251,10 +251,147 @@ for num in range(10,20): # range start at 10 and exclude 20
 ```
 
 ## Python functions ##
+write function for specific task and run it (e.g. to rotate; save; invert color...)
+```python
+## Create some functions
+def my_function(): # here define function name as "my_function()"
+  print("Hello I am a function")
+def my_function(name): # here define function name as "my_function()"
+  print("Hello your name is: ", name)
+## Launch the function
+my_function() # call the function
+my_function("Thomas") # call the function here with an argument
+
+## Add a default argument (parameter) to a function
+def my_country(country = "France"):
+  print("My country is: ", country)
+
+## Function with a loop
+### Function that print all parameters within a list
+def my_function(my_list): 
+  for x in my_list:
+    print(x) 
+    
+fruits = ['apple', 'pear', 'banana']
+
+my_function(fruits)
+
+## Function using return
+def my_function(x):
+  return 5*x
+  
+my_function(3) # output 15
+```
+Create a function to change F into C
+```python
+# Simple version
+def F(C):
+  F_value = ((9.0/5)*C) + 32
+  print('%d degrees Centigrade is equal to %d Fahreneit' %(C, F_value)) # Add place holder, first one is centigrade then farneeight
+
+F(-40) # output C to F
+
+# Version with a list
+Centi = [-40, -20, -10, 0, 10, 20, 30, 40] # Create the list
+
+def F(C):
+  for i in C: # C is the list; i is the value in the loop
+  
+    F_value = ((9.0/5)*i) + 32
+    print('%d degrees Centigrade is equal to %d Fahreneit' %(i, F_value))
+
+F(Centi) # output math for the list
+```
+Create a function to modify image
+```python
+## import libraries
+from scipy import misc, ndimage # For basic image modifications
+import imageio # To save and read image
+
+def rotated(img): # take an image as an argument
+  rotated_img = ndimage.rotate(img, 45) # take img and rotate by 45 deg
+  imageio.imsave('images/rotated.jpg', rotated_img) # save the img
+
+def blurred(img): 
+  blurred_img = ndimage.gaussian_filter(img, sigma=5) # take img and blur it
+  imageio.imsave('images/blurred.jpg', blurred_img) # save the img
+
+def denoised(img): 
+  denoised_img = ndimage.median_filter(img, 3) # take img and blur it
+  imageio.imsave('images/denoised.jpg', denoised_img) # save the img
+  
+img1 = imageio.imread('images/Meristem_profile.jpg')
+
+rotated(img1)
+blurred(img1)
+denoised(img1)
+```
+## Python classes ##
+*attributes* = parameter into the function
+Count each cells and define the distance from other cell
+
+**class** work almost like a **function**
+
+```python
+class CellDemo: # Define the class "Cell"
+  pass
+  
+cell_1 = CellDemo() # instance 1 (= object 1)
+cell_2 = CellDemo() # instance 2
+
+print(cell_1)
+print(cell_2)
+
+# specify position to cell
+cell_1.name = "cell_one"
+cell_1.x = 0
+cell_1.y = 0
+
+cell_2.name = "cell_two"
+cell_2.x = 10
+cell_2.y = 5
+```
+Now let's uses classes to simplify the code
+```python
+from math import sqrt
+
+# Define the class "Cell"
+class Cell: 
+  def __init__(self, name, x, y): # def for defining a function; initialize a function with the parameters name x and y
+    self.name = name   # almost equal to: cell_1.name = "cell_one"
+    self.x = x
+    self.y = y
+    
+# function to calculate distance within 2 cells
+  def cell_distance(self, other_cell):
+    distance = sqrt((self.x - other_cell.x)**2 + (self.y - other_cell.y)**2) # basic math for distance between coordinates
+    return distance 
+ 
+# now create instances (= objects)
+cell_1 = Cell('cell_one', 0, 0)
+cell_2 = Cell('cell_two', 10, 5)
+cell_3 = Cell('cell_two', 20, 9)
+
+
+#
+distance = cell_1.cell_distance(cell_2) # cell1 vs distance to cell_2 which is called using the cell_distance() function changing 'other_cell' to 'cell_2'
+print("The cells are %f units apart." % distance)
+```
+--> Instances could be defined automatically if we used cell/object detection before
+
+
+
+
+
+
+
+
+
+
+
+
+
 https://www.youtube.com/watch?v=sLc0O-8RpW0&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=15
-
-
-
 # Usefull command: #
 - srun --x11 --nodelist=node03 --mem=20g --pty bash -l
 - type(VARIABLE) = say which type is it (integer, string,..)
