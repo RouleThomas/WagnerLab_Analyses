@@ -379,6 +379,47 @@ print("The cells are %f units apart." % distance)
 ```
 --> Instances could be defined automatically if we used cell/object detection before
 
+## scikit-image ##
+Edge detection using skimage.filters
+```python
+from skimage import io
+from matplotlib import pyplot as plt # to install: conda install -c conda-forge matplotlib
+import imageio # To save and read image
+
+img = imageio.imread('images/protoplast_1.jpg', as_gray = True) # read image and scale to grey
+
+from skimage.filters import roberts, sobel, scharr, prewitt
+
+egde_roberts = roberts(img)
+edge_sobel = sobel(img)
+edge_scharr = scharr(img)
+edge_prewitt = prewitt(img)
+
+fig, axes = plt.subplots(nrows = 2, ncols = 2, sharex = True, sharey = True, figsize = (8,8)) # used to make multi plots
+
+ax = axes.ravel()
+
+ax[0].imshow(img, cmap=plt.cm.gray)
+ax[0].set_title('Original image')
+
+ax[1].imshow(edge_sobel, cmap=plt.cm.gray)
+ax[1].set_title('sobel image')
+
+ax[2].imshow(edge_scharr, cmap=plt.cm.gray)
+ax[2].set_title('scharr image')
+
+ax[3].imshow(edge_prewitt, cmap=plt.cm.gray)
+ax[3].set_title('prewitt image')
+
+for a in ax:
+  a.axis('off')
+ 
+plt.tight_layout()
+plt.show()
+
+
+
+```
 
 
 
@@ -387,6 +428,15 @@ print("The cells are %f units apart." % distance)
 
 
 
+
+
+## Tutorial I looked quickly: ##
+17 - Reading images in Python: https://www.youtube.com/watch?v=52pMFnkDU-4&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=18
+Various way to import image
+18 - Image processing using pillow in Python https://www.youtube.com/watch?v=s_hDL2fGvow&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=19
+Pillow is a package for basic image processing: croping, resizing, changing color. Not for Machine Learning stuff such as segmentation, object recognition (opencv, sicket.image, ...)
+19 - image processing using scipy in Python https://www.youtube.com/watch?v=s_hDL2fGvow&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=20
+scipy library part of numpy stack. Could be used to plot different images in one plot. To filter some pixel values from an image
 
 
 
