@@ -416,10 +416,174 @@ for a in ax:
  
 plt.tight_layout()
 plt.show()
-
-
-
 ```
+**Kenny** Edge detection using skimage.features = output is a binary image
+```python
+from skimage import io
+from matplotlib import pyplot as plt # to install: conda install -c conda-forge matplotlib
+import imageio # To save and read image
+
+img = imageio.imread('images/protoplast_1.jpg', as_gray = True) # read image and scale to grey
+
+from skimage.feature import canny # canny do noise detection, gradient detection...
+edge_canny = canny(img, sigma=3)
+plt.imshow(edge_canny)
+plt.show()
+```
+Lets calculate the speed by which cell colonize an area ("scratch assay")
+Import scratch images from tutorial [repo](https://github.com/bnsreenu/python_for_microscopists/tree/master/images/scratch_assay)
+```python
+# Import packages
+import matplotlib.pyplot as plt
+from skimage import io, restoration
+from skimage.filters.rank import entropy # entropy detect the mess; not clean area; in an image, 
+from skimage.morphology import disk
+import numpy as np
+
+# Import image
+img = io.imread("images/scratch_assay/Scratch0.jpg")
+
+# Apply entropy filter
+entr_img = entropy(img, disk(3)) # disk is the size of the disk that detect clean area
+plt.imshow(entr_img, cmap = 'gray')
+plt.show() # We see the scratch (clean area) is black and side with cells is white
+
+# Add treshold on entropy image to detect the middle/scratch/clean area
+
+from skimage.filters import try_all_threshold
+fig, ax = try_all_threshold(entr_img, figsize=(10,8), verbose=False) # Calculate some different tresholdfrom the image
+plt.show() # Otsu looks better
+
+# Apply the treshold to the entropy image
+
+from skimage.filters import threshold_otsu
+thresh = threshold_otsu(entr_img) # Give the threshold value of Osu filter
+
+binary = entr_img <= thresh # Modify binary/entropy image as all dark pixel are False  and white are True
+plt.imshow(binary, cmap = 'gray')
+plt.show() # We have a clean black and white image
+
+# Then calculate the number of white pixel = area that needs to be colonize
+print("The percent bright pixels is: ", (np.sum(binary==1)/((np.sum(binary==1))+(np.sum(binary==0))))) # Here we count the number of True / total values = Percent of bright pixels
+```
+Simplify the scratch assay code with loop:
+```python
+# Import packages
+import matplotlib.pyplot as plt
+from skimage import io, restoration
+from skimage.filters.rank import entropy # entropy detect the mess; not clean area; in an image, 
+from skimage.morphology import disk
+import numpy as np
+from skimage.filters import try_all_threshold
+from skimage.filters import threshold_otsu
+import glob
+import os # To make sure files are in the correct order
+
+# Prerequistes
+time = 0 # Image 0 = time is 0, image 1; time is 1, etc...
+time_list = [] # Create an empty list to be populated
+area_list = [] # Create an empty list to be populated
+path = "images/scratch_assay/*.*" # Read all files within this folder
+list_of_files = sorted(filter(os.path.isfile, glob.glob(path)))
+
+for file in list_of_files: 
+  img = io.imread(file) # Import image
+  entr_img = entropy(img, disk(10)) # Apply entropy
+  thresh = threshold_otsu(entr_img) # Apply threshold
+  binary = entr_img <= thresh 
+  scratch_area = np.sum(binary == True)
+#  print(time, scratch_area)
+  time_list.append(time) 
+  area_list.append(scratch_area)
+  time+=1 # Time equal to time + 1
+
+plt.plot(time_list, area_list, 'bo')
+plt.show() # Show the time as function of pixels numbers
+
+# To add linear regression
+
+from scipy.stats import linregress
+slope, intercept, r_value, p_value, std_err = linregress(time_list, area_list)
+print("y= ", slope, "x", " + ", intercept)
+print("R\N{SUPERSCRIPT TWO} = ", r_value**2)
+```
+Real examples with Shalini data:
+```python
+# Import packages
+import matplotlib.pyplot as plt
+from skimage import io, restoration
+from skimage.filters.rank import entropy # entropy detect the mess; not clean area; in an image, 
+from skimage.morphology import disk
+import numpy as np
+from skimage.filters import try_all_threshold
+from skimage.filters import threshold_otsu
+import glob
+import os # To make sure files are in the correct order
+
+# Modify images to keep only the green color
+from imageio import imread, imsave
+
+# Lets do it ugly way one by one but a loop could be performed
+
+FRP_0_green = io.imread('images/Shalini/FRP_0.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_0_green.jpg', FRP_0_green)
+FRP_1_green = io.imread('images/Shalini/FRP_1.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_1_green.jpg', FRP_1_green)
+FRP_2_green = io.imread('images/Shalini/FRP_2.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_2_green.jpg', FRP_2_green)
+FRP_3_green = io.imread('images/Shalini/FRP_3.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_3_green.jpg', FRP_3_green)
+FRP_4_green = io.imread('images/Shalini/FRP_4.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_4_green.jpg', FRP_4_green)
+FRP_5_green = io.imread('images/Shalini/FRP_5.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_5_green.jpg', FRP_5_green)
+FRP_6_green = io.imread('images/Shalini/FRP_6.jpg') * [0., 1., 0.] # keep only the green; multiply per zero the other color
+imsave('images/Shalini/FRP_6_green.jpg', FRP_6_green)
+
+
+# Prerequistes
+time = 0 # Image 0 = time is 0, image 1; time is 1, etc...
+time_list = [] # Create an empty list to be populated
+area_list = [] # Create an empty list to be populated
+path = "images/Shalini_green/*.*" # Read all files within this folder
+list_of_files = sorted(filter(os.path.isfile, glob.glob(path)))
+
+#############################################
+##### Find the best entropy parametrs #####
+#############################################
+img = io.imread("images/Shalini_green/FRP_1_green.jpg", as_gray = True)
+
+
+# Apply entropy filter
+entr_img = entropy(img, disk(1)) # disk is the size of the disk that detect clean area
+plt.imshow(entr_img, cmap = 'gray')
+plt.show() # We see the scratch (clean area) is black and side with cells is white
+
+# Add treshold on entropy image to detect the middle/scratch/clean area
+
+from skimage.filters import try_all_threshold
+fig, ax = try_all_threshold(entr_img, figsize=(10,8), verbose=False) # Calculate some different tresholdfrom the image
+plt.show() # Otsu looks better
+
+#############################################
+
+# Launch the program on all pictures
+
+for file in list_of_files: 
+  img = io.imread(file, as_gray = True) # Import image
+  entr_img = entropy(img, disk(1)) # Apply entropy
+  thresh = threshold_otsu(entr_img) # Apply threshold
+  binary = entr_img <= thresh 
+  scratch_area = np.sum(binary == False)
+#  print(time, scratch_area)
+  time_list.append(time) 
+  area_list.append(scratch_area)
+  time+=1 # Time equal to time + 1
+
+plt.plot(time_list, area_list, 'bo')
+plt.show() # Show the time as function of pixels numbers
+```
+WORK !!!
 
 
 
@@ -427,6 +591,14 @@ plt.show()
 
 
 
+
+
+
+
+
+
+
+CHUI AL :  https://www.youtube.com/watch?v=jcUx-TQpcM8&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=22
 
 
 
