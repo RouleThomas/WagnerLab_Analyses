@@ -680,18 +680,11 @@ XXX Or follow tutorial as there is probably better segmentation method
 ```
 
 ## Random Walker segmentation ##
+Histogram segmentation does not work when data is noisy or color not so different. For that Random Walker segmentation is better.
 
 
+https://www.youtube.com/watch?v=6P8YhJa2V6o&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=25
 
-
-
-
-
-
-
-
-
-CHUI AL :  https://www.youtube.com/watch?v=jcUx-TQpcM8&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=22
 
 
 
