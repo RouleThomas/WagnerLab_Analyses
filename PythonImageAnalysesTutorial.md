@@ -583,10 +583,103 @@ for file in list_of_files:
 plt.plot(time_list, area_list, 'bo')
 plt.show() # Show the time as function of pixels numbers
 ```
-WORK !!!
+
+ ## Denoising microscope images ##
+Gaussian kurnel, the sum of all pixel within the image is 1. 
+```python
+from skimage import io # import image
+from scipy import ndimage as nd # denoise image
+from matplotlib import pyplot as plt # make subplots
+from skimage.restoration import denoise_nl_means, estimate_sigma
+
+# Gaussian denoising
+img = io.imread("images/denoised.jpg")
+guassian_img = nd.gaussian_filter(img, sigma = 3)
+
+plt.imshow(guassian_img)
+plt.show() 
+
+# Median denoising
+img = io.imread("images/denoised.jpg")
+median_img = nd.median_filter(img, size = 3)
+
+plt.imshow(median_img)
+plt.show() 
 
 
+# nlm denoising
+sigma_est = np.mean(estimate_sigma(img, multichannel=True))
+patch_kw = dict(patch_size=5, patch_distance=3, multichannel=True)
 
+nlm = denoise_nl_means(img, h= 1.15 * sigma_est, fast_mode=True, **patch_kw) # Here **patch_kw  mean we are unpacking a dictionnary called "patch"; it is the same as taping what is inside dict
+
+# plt.imsave("images/denoised_gaussian.jpg", guassian_img)
+```
+--> Can be used to denoise noisy, blurry images with not clear edges
+
+## Histogram based image segmentation ##
+```python
+from skimage.restoration import denoise_nl_means, estimate_sigma
+from skimage import data, img_as_float, img_as_ubyte # convert images to float and ubyte
+import numpy as np
+from matplotlib import pyplot as plt
+
+# import img as float
+img = img_as_float(io.imread("images/protoplast_1.jpg"))
+
+# denoise img
+patch_kw = dict(patch_size=5, patch_distance=3, multichannel=True) # Create the patch_kw dictionary
+denoise = denoise_nl_means(img, h= 1.15 * sigma_est, fast_mode=True, **patch_kw) 
+plt.imshow(denoise)
+plt.show() 
+
+##  --> Denoising is not needed for our example here!
+
+# make histogram segmentation
+img_ubyte = img_as_ubyte(img) # convert img to ubyte = uint8 (from 0 to 255 range)
+plt.hist(img_ubyte.flat, bins = 100, range=(0,255)) # 
+plt.show() # Here lets manually segment our picture by individuals peaks
+
+segm1 = (img_ubyte <= 50)
+segm2 = (img_ubyte > 50) & (img_ubyte <= 100)
+segm3 = (img_ubyte > 100)
+
+all_segments = np.zeros((img_ubyte.shape[0], img_ubyte.shape[1], 3)) # Create a blamk image as the same size as our image; the 3 correspond to the three color channel
+
+all_segments[segm1] = (1,0,0) # all segment 1 pixel color in red
+all_segments[segm2] = (0,1,0)
+all_segments[segm3] = (0,0,1)
+
+plt.imshow(all_segments)
+plt.show()
+
+# clean the image --> That help removing tiny patch that spread in non-desired region
+from scipy import ndimage as nd
+
+segm1_opened = nd.binary_opening(segm1, np.ones((3,3)))
+segm1_closed = nd.binary_closing(segm1_opened, np.ones((3,3)))
+
+segm2_opened = nd.binary_opening(segm2, np.ones((3,3)))
+segm2_closed = nd.binary_closing(segm2_opened, np.ones((3,3)))
+
+segm3_opened = nd.binary_opening(segm3, np.ones((3,3)))
+segm3_closed = nd.binary_closing(segm3_opened, np.ones((3,3)))
+
+all_segments_cleaned = np.zeros((img_ubyte.shape[0], img_ubyte.shape[1], 3))
+
+all_segments_cleaned[segm1_closed] = (1,0,0) # all segment 1 pixel color in red
+all_segments_cleaned[segm2_closed] = (0,1,0)
+all_segments_cleaned[segm3_closed] = (0,0,1)
+
+plt.imshow(all_segments_cleaned)
+plt.show()
+```
+Let's try histogram segmentation with a high quality microscopy image
+```python
+XXX Or follow tutorial as there is probably better segmentation method
+```
+
+## Random Walker segmentation ##
 
 
 
