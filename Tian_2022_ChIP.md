@@ -752,7 +752,29 @@ bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1
 ```
 **MEME-CHIP:** Best output is for the 400-800 filter, even though n smaller. Shows AP2 TF family enrichment notably and other C2C2...
 
+## Fine-tune motif finding ##
 
+Modify my peak lenght: find the summit of each peaks and extend to +/- 300bp = 600bp total for each peaks; optimal for motif findings
+
+
+
+
+
+
+
+
+
+
+
+
+Look at the non-DEGs for motif discovery too.
+So pick the one very low express under the condition ChIP was done and higher express in some higher tissue = "inducible genes".
+--> Does TPM is ok?? 
+
+Do not filter for promoter, keep them all!
+
+For their length, keep summit +/- 300bp.
+Generate a background genomic dataset not bound: random sequences same length and same distribution. Winter et al 2011 Dev. Cell LFY CHIP. 
 
  
  
