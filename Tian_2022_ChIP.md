@@ -790,7 +790,7 @@ write.table(EMF2_peaks_summit_overlap_genes_complete_extend, file="data/ChIPseek
 Here is two files motif discovery can be assessed:
 - EMF2_peaks_summit_greenscreen_extend.bed = All the EMF2 greenscreen peaks with a 600bp length
 - EMF2_peaks_summit_overlap_genes_complete_extend.bed = All the EMF2 greenscreen peaks overlapping with H3K27me3 with a 600bp length
-Now let's look at the binding profile of gene locus and create a control random genomic regions that have same lenght and same distribution over genes (as in [Winter et al 2011 Dev cell](XXX))
+Now let's look at the binding profile of gene locus and create a control random genomic regions that have same lenght and same distribution over genes (as in [Winter et al 2011 Dev cell](https://www.sciencedirect.com/science/article/pii/S1534580711001250?via%3Dihub#app3)))
 ```R
 library(ChIPseeker)
 library(tidyverse)
@@ -828,6 +828,50 @@ plotPeakProf2(peak = peaks.gr, upstream = rel(0.2), downstream = rel(0.2),
               TxDb = txdb, ignore_strand = F)
 dev.off()
 ```
+Let's troubleshoot the random genomic regions generations, check [here](https://www.biostars.org/p/77943/) forum that discuss it.\
+To install GimmeMotifs look [here](https://gimmemotifs.readthedocs.io/en/master/installation.html#conda-the-easy-way) and [here](https://github.com/vanheeringen-lab/gimmemotifs)\
+```bash
+# Set up the necessary channels
+conda config --add channels defaults
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+# install GimmeMotifs 
+conda create -n gimme python=3 gimmemotifs
+```
+FAIL: took forever, so I do:
+```bash
+conda config --remove channels conda-forge
+conda config --add channels conda-forge
+
+conda create -n gimme python=3 gimmemotifs
+```
+FAIL: took forever again
+Test create environment `gimmemotifs` and install using **mamba** (solution found [here](https://github.com/vanheeringen-lab/gimmemotifs/issues/271)):
+```bash
+# Create gimmemotifs conda environment
+conda create -n python=3.11.0 --name gimmemotifs
+
+# Install mamba
+conda install -c conda-forge mamba
+
+# Install gimmemotifs through mamba
+mamba create -n gimme gimmemotifs=0.17.2
+
+mamba init
+```
+Close and restart Shell, and now it work:
+```bash
+srun --x11 --nodelist=node03 --mem=20g --pty bash -l
+mamba activate gimme
+
+gimme --help
+```
+
+XXX
+
+
+
 
 
 
@@ -855,7 +899,7 @@ Generate a background genomic dataset not bound: random sequences same length an
 
 
 
-see for next:
+see for ChIP motif analyses:
 https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html
 https://www.hdsu.org/chipatac2020/06_CHIP_PeakAnnotation.html
 
