@@ -753,23 +753,88 @@ bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1
 **MEME-CHIP:** Best output is for the 400-800 filter, even though n smaller. Shows AP2 TF family enrichment notably and other C2C2...
 
 ## Fine-tune motif finding ##
+Modify my peak lenght: find the summit of each peaks and extend to +/- 300bp = 600bp total for each peaks; optimal for motif findings.\
+Peak summit coordinates are found in the `data/macs2_out/chipPeaks/EMF2_pool_summits.bed`, let's inner_join summits from peaks corresponding to greenscreen called peaks `data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak`; and extend to +/- 300bp in R:
 
-Modify my peak lenght: find the summit of each peaks and extend to +/- 300bp = 600bp total for each peaks; optimal for motif findings
+```bash
+srun --x11 --nodelist=node03 --mem=20g --pty bash -l
+conda activate ChIPseeker
+R
+```
+```R
+library(ChIPseeker)
+library(tidyverse)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+# Open summit and greenscreen peaks files
+EMF2_peaks_summit =  read_delim('data/macs2_out/chipPeaks/EMF2_pool_summits.bed', col_names=FALSE) %>% rename(chr=X1, start=X2, end=X3, name=X4, value=X5)
+EMF2_peaks_greenscreen = read_delim('data/macs2_out/chipPeaks/gsMask_qval10/EMF2_pool_peaks.narrowPeak', col_names = FALSE) %>% rename(chr=X1, start=X2, end=X3, name=X4, value=X5) %>% dplyr::select(-X6, -X7, -X8, -X9, -X10)
+
+# isolate the greenscreen EMF2 peaks from the summit files using peak name
+EMF2_peaks_summit_greenscreen = EMF2_peaks_summit %>% inner_join(EMF2_peaks_greenscreen %>% dplyr::select(name))
+
+# Extend the peaks to +/- 300bp
+EMF2_peaks_summit_greenscreen_extend = EMF2_peaks_summit_greenscreen %>% mutate(start_extend=start-300, end_extend=end+299) %>% dplyr::select(chr, start_extend, end_extend, name, value)
+
+# Export as bed to be converted to FASTA (format should be chr01...) 
+write.table(EMF2_peaks_summit_greenscreen_extend, file="data/ChIPseeker/EMF2_peaks_summit_greenscreen_extend.bed",row.names=FALSE,quote=FALSE,sep='\t')
+
+# Import EMF2 and H3K27me3 overlapping peaks and modify their peak lenght as previously to reach 600bp
+overlap_genes_EMF2_complete = read_delim('data/ChIPseeker/overlap_genes_EMF2_complete.bed') # import
+EMF2_peaks_summit_overlap_genes_complete = EMF2_peaks_summit %>% inner_join(overlap_genes_EMF2_complete %>% dplyr::select(name)) # combine
+EMF2_peaks_summit_overlap_genes_complete_extend = EMF2_peaks_summit_overlap_genes_complete %>% mutate(start_extend=start-300, end_extend=end+299) %>% dplyr::select(chr, start_extend, end_extend, name, value) # extend
+
+# Export as bed to be converted to FASTA (format should be chr01...) 
+write.table(EMF2_peaks_summit_overlap_genes_complete_extend, file="data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend.bed",row.names=FALSE,quote=FALSE,sep='\t')
+```
+Here is two files motif discovery can be assessed:
+- EMF2_peaks_summit_greenscreen_extend.bed = All the EMF2 greenscreen peaks with a 600bp length
+- EMF2_peaks_summit_overlap_genes_complete_extend.bed = All the EMF2 greenscreen peaks overlapping with H3K27me3 with a 600bp length
+Now let's look at the binding profile of gene locus and create a control random genomic regions that have same lenght and same distribution over genes (as in [Winter et al 2011 Dev cell](XXX))
+```R
+library(ChIPseeker)
+library(tidyverse)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+# Distribution of EMF2_peaks_summit_overlap_genes_complete_extend
+txdb <- makeTxDbFromBiomart(biomart="plants_mart",
+                            dataset="osativa_eg_gene",
+                            host="plants.ensembl.org")
+                           
+
+# Convert chr name as numerical value as in the txdb file
+
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+
+EMF2_peaks_summit_overlap_genes_complete_extend_ChrNumeric = EMF2_peaks_summit_overlap_genes_complete_extend %>% dplyr::rename(Chr=chr, start=start_extend, end=end_extend) %>% left_join(chr_label) %>% dplyr::select(chr, start, end, name, value)
+
+# Create genomic range file
+peaks.gr = makeGRangesFromDataFrame(EMF2_peaks_summit_overlap_genes_complete_extend_ChrNumeric, keep.extra.columns=TRUE)
+
+# Annotate peak to genes
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb)
+
+# Check distribution plot relative to features
+pdf('data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_distribution.pdf')
+plotAnnoPie(peakAnno)
+dev.off()
+
+# Check distribution to gene
+pdf('data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_distribution_gene.pdf')
+plotPeakProf2(peak = peaks.gr, upstream = rel(0.2), downstream = rel(0.2),
+              conf = 0.95, by = "gene", type = "body", nbin = 100,
+              TxDb = txdb, ignore_strand = F)
+dev.off()
+```
 
 
 
 
 
 
-
-
-
-
-
-
-Look at the non-DEGs for motif discovery too.
-So pick the one very low express under the condition ChIP was done and higher express in some higher tissue = "inducible genes".
---> Does TPM is ok?? 
+Can try an aditional filter with motifs from "inducible genes" = very low express under the condition ChIP was done and higher express in some higher tissue = "inducible genes". --> Does TPM is ok?? 
 
 Do not filter for promoter, keep them all!
 
