@@ -867,8 +867,20 @@ mamba activate gimme
 
 gimme --help
 ```
+Let's use `gimme background` in:
+- *random* mode: "randomly generated sequence with the same dinucleotide distribution as the input sequences according to a 1st order Markov model"
+- *gc* mode: "sequences randomly chosen from the genome with the same GC% as the input sequences"
+```bash
+# Convert bed to fasta
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_noheader.bed -fo data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend.fasta # BED header as been removed with manual editing
 
-XXX
+# random option
+gimme background -i data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend.fasta -f FASTA -s 600 -n 5407 > data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_random.fasta data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_random.fasta random
+
+# gc option
+gimme background -i data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend.fasta -f FASTA -s 600 -n 5407 > data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_random.fasta data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_gc.fasta gc # Failed to ouptput any data...
+```
+--> Generated fasta files have been analyzed in MEME-ChIP webservice in discriminative and differential enrichment mode (negative control random sequences).
 
 
 
@@ -876,9 +888,7 @@ XXX
 
 
 
-
-
-Can try an aditional filter with motifs from "inducible genes" = very low express under the condition ChIP was done and higher express in some higher tissue = "inducible genes". --> Does TPM is ok?? 
+Can try an aditional filter with motifs from "inducible genes" = very low express under the condition ChIP was done and higher express in some higher tissue = "inducible genes". --> Does TPM is ok?? Yes but make sure data type is comparable (RNA population comparable, same library prep (strandness and polyA depletion)))
 
 Do not filter for promoter, keep them all!
 
