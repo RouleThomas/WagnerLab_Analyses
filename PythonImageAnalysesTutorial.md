@@ -228,13 +228,13 @@ while C<= 40:
   C = C + 5
 ```
 play with **break** in **loop** or **while**; to stop a loop or a while.
-```
+```python
 for letter in 'I love python':
   if letter == 'p':
     break # break the code if the letter is p
   print("Current letter is: ", letter)
 ```
-```
+```python
 a = 10
 while a>0:
   print("Current value is: ", a)
@@ -242,7 +242,7 @@ while a>0:
   if a==5:
     break
 ```
-```
+```python
 for num in range(10,20): # range start at 10 and exclude 20
   if num%2 ==0: # when you divide your number per two, if your reminder is 0 = even number
     print("%d is an even number" %(num))
