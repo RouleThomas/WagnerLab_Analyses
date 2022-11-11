@@ -882,11 +882,7 @@ gimme background -i data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_ext
 ```
 --> Generated fasta files have been analyzed in MEME-ChIP webservice in discriminative and differential enrichment mode (negative control random sequences).
 
-
-
-
-
-
+# Draft notes
 
 Can try an aditional filter with motifs from "inducible genes" = very low express under the condition ChIP was done and higher express in some higher tissue = "inducible genes". --> Does TPM is ok?? Yes but make sure data type is comparable (RNA population comparable, same library prep (strandness and polyA depletion)))
 
@@ -894,18 +890,6 @@ Do not filter for promoter, keep them all!
 
 For their length, keep summit +/- 300bp.
 Generate a background genomic dataset not bound: random sequences same length and same distribution. Winter et al 2011 Dev. Cell LFY CHIP. 
-
- 
- 
- 
-
-
-
-
-
-
-
-
 
 
 
@@ -915,23 +899,5 @@ https://www.hdsu.org/chipatac2020/06_CHIP_PeakAnnotation.html
 
 
 
-Follow [this](https://github.com/sklasfeld/ChIP_Annotation) method\
---> Proceed with the tutorial to understand what s going on
-
-
-
-
-
-
-`
-
-
-
-
-
-
-
-
-Minor issues:
+# Minor issues
 - Mapping only work on node01 or node03
-- 
