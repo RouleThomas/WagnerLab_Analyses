@@ -1,4 +1,5 @@
 # Titanic Data #
+Supervised ML; classification
 Tutorial to learn Machine Learning in Python can be found [here](https://www.kaggle.com/code/alexisbcook/titanic-tutorial/notebook)\
 Let's use Image conda environment for the tutorial:
 ```bash
