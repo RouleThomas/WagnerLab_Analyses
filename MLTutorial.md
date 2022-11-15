@@ -1,3 +1,4 @@
+# Titanic Data #
 Tutorial to learn Machine Learning in Python can be found [here](https://www.kaggle.com/code/alexisbcook/titanic-tutorial/notebook)\
 Let's use Image conda environment for the tutorial:
 ```bash
@@ -122,11 +123,76 @@ op['Survived'] = prd
 op.head()
 
 op.to_csv("Submission1.csv",index=False)
-
 ```
 
+# Iris Data #
+Tutorial can be found [here](https://machinelearningmastery.com/machine-learning-in-python-step-by-step/)
 
+```python
+# compare algorithms
+from pandas import read_csv
+from matplotlib import pyplot
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import StratifiedKFold
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.metrics import accuracy_score   
+from sklearn.metrics import confusion_matrix  
+from sklearn.metrics import classification_report  
 
+# Load dataset
+url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/iris.csv"
+names = ['sepal-length', 'sepal-width', 'petal-length', 'petal-width', 'class']
+dataset = read_csv(url, names=names)
 
+# Split-out validation dataset; keep 80% for training and 20% for testing
+array = dataset.values
+X = array[:,0:4] # select column from 0 to 4
+y = array[:,4] # select the 5 column = our class
+X_train, X_validation, Y_train, Y_validation = train_test_split(X, y, test_size=0.20, random_state=1, shuffle=True) # Split the data into training and test
+
+# Spot Check Algorithms
+models = []
+models.append(('LR', LogisticRegression(solver='liblinear', multi_class='ovr')))
+models.append(('LDA', LinearDiscriminantAnalysis()))
+models.append(('KNN', KNeighborsClassifier()))
+models.append(('CART', DecisionTreeClassifier()))
+models.append(('NB', GaussianNB()))
+models.append(('SVM', SVC(gamma='auto')))
+
+# evaluate each model in turn; output accuracy of each model
+results = []
+names = []
+for name, model in models:
+	kfold = StratifiedKFold(n_splits=10, random_state=1, shuffle=True)
+	cv_results = cross_val_score(model, X_train, Y_train, cv=kfold, scoring='accuracy')
+	results.append(cv_results)
+	names.append(name)
+	print('%s: %f (%f)' % (name, cv_results.mean(), cv_results.std()))
+    
+    
+# Compare Algorithms
+pyplot.boxplot(results, labels=names)
+pyplot.title('Algorithm Comparison')
+pyplot.show()
+```
+--> Show that svm is the best model to predict Class of the flower based on lenght and width of sepal and petal.\
+Then make prediction
+```python
+# Make predictions on validation dataset
+model = SVC(gamma='auto')
+model.fit(X_train, Y_train)
+predictions = model.predict(X_validation)
+
+# Evaluate predictions; compare to expected result
+print(accuracy_score(Y_validation, predictions))
+print(confusion_matrix(Y_validation, predictions))
+print(classification_report(Y_validation, predictions))
+```
 
 
