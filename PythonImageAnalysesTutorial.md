@@ -688,6 +688,18 @@ https://www.youtube.com/watch?v=6P8YhJa2V6o&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgw
 
 
 
+
+
+
+
+Switch to ML-related topics directly
+
+
+
+## 43 - What is machine learning anyway? ##
+https://www.youtube.com/watch?v=oeTtSk4IT60&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=44 
+
+
 ## Tutorial I looked quickly: ##
 17 - Reading images in Python: https://www.youtube.com/watch?v=52pMFnkDU-4&list=PLZsOBAyNTZwYHBIlu_PUO19M7aHMgwBJr&index=18
 Various way to import image
