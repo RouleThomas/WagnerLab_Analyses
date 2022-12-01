@@ -650,6 +650,15 @@ Direction (targetPeak=H3K27me3):
 - Overlap EMF2 and H3K27me3 (related to peak in gene) has been check: significant overlap
 
 
+# 4bis: Annotate Peak to genes using Sammy method #
+Code can be found [here](https://github.com/sklasfeld/ChIP_Annotation) and help/tuto [here](https://github.com/sklasfeld/GreenscreenProject/blob/main/TUTORIAL.pdf)\
+
+CHUI AL
+
+
+
+
+
 ## Motif discovery with MEME ##
 Check [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html) and [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/motif_analysis_prep.html) for help\
 Let's do **MEME-CHIP** (specifically design for ChIP, combine  DREME (motif discovery) and Tomtom (check if motif ressemble known TF))\
