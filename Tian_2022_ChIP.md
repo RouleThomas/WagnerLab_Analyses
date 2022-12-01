@@ -653,7 +653,58 @@ Direction (targetPeak=H3K27me3):
 # 4bis: Annotate Peak to genes using Sammy method #
 Code can be found [here](https://github.com/sklasfeld/ChIP_Annotation) and help/tuto [here](https://github.com/sklasfeld/GreenscreenProject/blob/main/TUTORIAL.pdf)\
 
-CHUI AL
+According to tutorial, Sammy is using a gff converted to a bed file that looks like that (only gene info (not transcript) is kept):
+```
+Chr1	3630	5899	AT1G01010	255	+
+Chr1	6787	9130	AT1G01020	255	-
+Chr1	11648	13714	AT1G01030	255	-
+```
+Let's use Sammy method and script for that in the `CondaUmap` environment:\
+Need first to convert the gff file to a tsv file and keep only the gene information, for that use `scripts/gff2annTable.py`\
+**FAIL**:\ `from w3lib.html import replace_entities ModuleNotFoundError: No module named w3lib`\
+I tried installing using `conda install w3lib` it install but I got the same error
+**TROUBLESHOOT**: Lets try modify the shebang line from the python script so that it uses the correct conda environment:
+That is where my packages I installed: `environment location: /home/roule/.conda/envs/CondaUmap`
+So change shebang `#!/usr/bin/env python3` into `XXX`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Lets use [gff2bed](https://bedops.readthedocs.io/en/latest/content/reference/file-management/conversion/gff2bed.html) from bedops to convert gff to bed.\
+Let's install bedops in the `CondaUmap` environment:
+```bash
+conda activate CondaUmap
+conda install bedops
+
+convert2bed -i gtf < ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.gtf  > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.bed
+```
+1. 
+
+
+
+
+Generate a bed file with location of peak summit and extra information using `EMF2PooledPeaks2Summits.sh` and `H3K27me3PooledPeaks2Summits.sh`.\
+Then Sammy script can be runned with `annotate_EMF2.sh` and `annotate_H3K27me3.sh` (I modified the script as it work in our datasets.
+
+
+
+
+
+
 
 
 
