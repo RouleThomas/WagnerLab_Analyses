@@ -663,42 +663,56 @@ Let's use Sammy method and script for that in the `CondaUmap` environment:\
 Need first to convert the gff file to a tsv file and keep only the gene information, for that use `scripts/gff2annTable.py`\
 **FAIL**:\ `from w3lib.html import replace_entities ModuleNotFoundError: No module named w3lib`\
 I tried installing using `conda install w3lib` it install but I got the same error
-**TROUBLESHOOT**: Lets try modify the shebang line from the python script so that it uses the correct conda environment:
-That is where my packages I installed: `environment location: /home/roule/.conda/envs/CondaUmap`
-So change shebang `#!/usr/bin/env python3` into `XXX`
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Lets use [gff2bed](https://bedops.readthedocs.io/en/latest/content/reference/file-management/conversion/gff2bed.html) from bedops to convert gff to bed.\
-Let's install bedops in the `CondaUmap` environment:
-```bash
-conda activate CondaUmap
-conda install bedops
-
-convert2bed -i gtf < ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.gtf  > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chrlabel.bed
+**TROUBLESHOOT**: So problem is that package install through conda but Python cannot find it. Forum [here](https://stackoverflow.com/questions/39811929/package-installed-by-conda-python-cannot-find-it) proposes to: run `conda init` after installing the package; close and re-open terminal.
+**SOLUTION TO USE PIP**: Install through `pip3` (as python version >=3) using `--user` flag, as follow: ` pip3 install w3lib --user`. found [here](https://stackoverflow.com/questions/52949531/could-not-install-packages-due-to-an-environmenterror-errno-13). But still `from w3lib.html import replace_entities` failed...
+**TROUBLESHOOT**: Looks like Python I use do not look for the module I installed (different folder). 
+Command to check the path of python installed module: 
+```Python
+import sys
+print(sys.path)
 ```
-1. 
-
-
-
-
+The look at them with `ls /cm/shared/apps/Anaconda/2019.10/lib/python3.7/site-packages`
+Then install using `pip install w3lib --user`, and it work!!\
+**TROUBLESHOOT CONCLUSION**: Not clear what happened. Seems like to install module: Load Conda environment > install with `pip install XXX --user` > DONE
+Now lets convert the gff file to a tsv file and keep only the gene information using the working script:
+```bash
+python3 scripts/gff2annTable.py ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.gff3 ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.tsv -f gene
+```
+Then print only few columns and organize as it is a bed file (Sammy restrict to miRNA and coding gene, not sure that is good so I just convert in a bed):
+```bash
+awk 'BEGIN{OFS="\t"} (NR>1 ) {print $2,$3,$4,$1,$5,$6}' ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.tsv > ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.bed
+```
+Launch the Sammy script that annotate peak to genes. I modified the initial one XXX into `annotate_EMF2.sh`\
 Generate a bed file with location of peak summit and extra information using `EMF2PooledPeaks2Summits.sh` and `H3K27me3PooledPeaks2Summits.sh`.\
-Then Sammy script can be runned with `annotate_EMF2.sh` and `annotate_H3K27me3.sh` (I modified the script as it work in our datasets.
+Then Sammy script can be runned with `annotate_EMF2.sh` and `annotate_H3K27me3.sh` (I modified the script as it work in our datasets.\
+The bed file from GTF and peaks summit has not the same chr name. Let's modify GTF and TSV annotations files in R in `conda activate DESeq2`:
+```R
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+                  
+## Modification for the GTF ##                
+# import data               
+Oryza_gtf_bed =  read.table("../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.bed", header=FALSE) %>% as.tibble() %>% rename(chr=V1)
+
+# remove chr Mt/Pt and use chr non-numeric name
+Oryza_gtf_bed_chr_gene = Oryza_gtf_bed %>% filter(!(chr %in% c("Mt", "Pt"))) %>% mutate(chr=as.numeric(chr)) %>% left_join(chr_label) %>% filter(Chr != "NA") %>% separate(V4, into = c("ID", "trash"), sep = ";") %>% separate(ID, into = c("trash2", "gene")) %>% select(Chr, V2, V3, gene, V5, V6)
+
+# export the new bed
+write.table(Oryza_gtf_bed_chr_gene, file="data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed", row.names=FALSE,quote=FALSE,sep='\t')
+
+## Modification for the TSV ##
+# import tsv file
+Oryza_tsv =  read.table("../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_representative/Oryza_sativa.IRGSP-1.0.54.chr.tsv", sep = '\t', header = TRUE, fill = TRUE) %>% as.tibble() %>% select(gene_id, chrom, start, stop, score, strand)
+
+# remove chr Mt/Pt and use chr non-numeric name
+Oryza_tsv_chr_gene = Oryza_tsv %>% rename(chr=chrom) %>% left_join(chr_label) %>% separate(gene_id, into = c("ID", "trash"), sep = ";") %>% separate(ID, into = c("trash2", "gene")) %>% select(gene, Chr, start, stop, score, strand)
+
+# export the new bed
+write.table(Oryza_tsv_chr_gene, file="data/annotations/EMF2/Oryza_tsv_chr_gene.tsv", row.names=FALSE,quote=FALSE,sep='\t')
+```
+
+Data should  be tidy, now check sammy python annotate script XXX
 
 
 
