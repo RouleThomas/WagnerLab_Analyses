@@ -711,8 +711,93 @@ Oryza_tsv_chr_gene = Oryza_tsv %>% rename(chr=chrom) %>% left_join(chr_label) %>
 # export the new bed
 write.table(Oryza_tsv_chr_gene, file="data/annotations/EMF2/Oryza_tsv_chr_gene.tsv", row.names=FALSE,quote=FALSE,sep='\t')
 ```
+All data are tidy (bed, tsv genome files and the peak summits).\
+**ALWAYS WORK IN CondaUmap env here for using Sammy annotation**\
+Clone the Sammy git repo to have the script `git clone https://github.com/sklasfeld/ChIP_Annotation.git`\
+**FAIL**: `ModuleNotFoundError: No module named 'pybedtools'`\
+**TROUBLESHOOT SOLUTION**: Install the module through pip....: `pip install pybedtools --user`
+**FAIL:** 
+```
+ERROR: To perform genewise comparisons with tab-delimited text files, the user must set all three parameters: `compareGenesToText`(user-set:1), `compareGenesToTextNames` (user-set:0), and `addGeneToTextFeatures` (user-set:0)
+```
+Maybe because I did not add RNAseq data information. Let's add the DEGs; the table to use is the output from DESeq2 raw, but need to filter the DEGs, do that in R **in ChIPseeker conda env**:
+```R
+getwd() # "/home/roule/Tian_2022TPC_RNAseq/DESeq2"
+# import tsv file
+raw_table = read.table("raw_table.txt", sep = ',', header = TRUE, fill = TRUE) %>% as.tibble()
 
-Data should  be tidy, now check sammy python annotate script XXX
+# Filter DEG 0.05; edit gene column
+raw_table_padj05 = raw_table %>% filter(padj<0.05) %>% separate(gene, c("deletme", "gene"), sep=":") %>% select(-X, -deletme)
+
+# Export file
+write.table(raw_table_padj05, file="raw_table_padj05_NoQuoteNoRowname.txt", row.names=FALSE,quote=FALSE,sep=',') # Version without weird quote and row name
+write.table(raw_table_padj05, file="raw_table_padj05.txt", row.names=TRUE,quote=TRUE,sep=',') # Version keeping quote and row name: as the orignial raw_table.txt file
+```
+Go back on **CondaUmap env** and run Sammy script\
+```bash
+python3 scripts/ChIP_Annotation EMF2 \
+    ${out_dir}/ \
+    ${summits_dir}/EMF2_pool_summits.bed \
+    data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed \
+    -n ${summits_dir}/EMF2_pool_summits.narrowPeak \
+    -tss 4000 -tts 0 \
+    -gt data/annotations/EMF2/Oryza_tsv_chr_gene.tsv \
+    ${rna_dir}/raw_table_padj05.txt \
+    -gtn "geneMeta" "RNA_DE" \
+    -gtf "geneMeta:Name,Alias,Note,locus_type,description" \
+    "RNA_DE_seed:log2FoldChange,padj" \
+    -r2 ${rna_dir}/raw_table_padj05.txt 
+```
+**FAIL**: 
+``
+The `gene_id` column cannot be found in ../Tian_2022TPC_RNAseq/DESeq2/raw_table_padj05.txt.
+``
+**TROUBLESHOOT**: They were an issue with the `raw_table_padj05.txt` file; not all column were labeled, corrected manually.\
+Still fail, so let's use the other file where I removed the row name and quotes + label column `gene_id` instead of `gene`:
+```bash
+python3 scripts/ChIP_Annotation EMF2 \
+    ${out_dir}/ \
+    ${summits_dir}/EMF2_pool_summits.bed \
+    data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed \
+    -n ${summits_dir}/EMF2_pool_summits.narrowPeak \
+    -tss 4000 -tts 0 \
+    -gt data/annotations/EMF2/Oryza_tsv_chr_gene.tsv \
+    ${rna_dir}/raw_table_padj05_NoQuoteNoRowname.txt \
+    -gtn "geneMeta" "RNA_DE" \
+    -gtf "geneMeta:Name,Alias,Note,locus_type,description" \
+    "RNA_DE_seed:log2FoldChange,padj" \
+    -r2 ${rna_dir}/raw_table_padj05_NoQuoteNoRowname.txt 
+```
+Still fail, I think it does not like that the file sep = ',', may prefer tab-sep... Convert file into tab sep:
+```bash
+awk -F"," '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7}' ${rna_dir}/raw_table_padj05_NoQuoteNoRowname.txt > ${rna_dir}/raw_table_padj05_NoQuoteNoRowname_TabSep.txt
+```
+**FAIL**: `pandas.errors.ParserError: Error tokenizing data. C error: Expected 6 fields in line 10057, saw 10`\
+The tsv file is indeed corrupted... Lets correct it, for that let's just modify the gtf file has the only diff is the column order...:
+```bash
+cp data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed data/annotations/EMF2/Oryza_tsv_chr_gene_corr.tsv # Copy file
+awk '{print $4"\t"$1"\t"$2"\t"$3"\t"$5"\t"$6}' data/annotations/EMF2/Oryza_tsv_chr_gene_corr.tsv > data/annotations/EMF2/Oryza_tsv_chr_gene_corr_reorder.tsv # Change column order
+```
+**CONCLUSION TO RUN annotate script**: Make sure headers are the same between the tsv/bed summits/gtf and DEGs files. Also make sure to label gene column as `gene_id`.
+Here is the script that worked:
+```bash
+python3 scripts/ChIP_Annotation EMF2 \
+    ${out_dir}/ \
+    ${summits_dir}/EMF2_pool_summits.bed \
+    data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed \
+    -n ${summits_dir}/EMF2_pool_summits.narrowPeak \
+    -tss 4000 -tts 0 \
+    -gt data/annotations/EMF2/Oryza_tsv_chr_gene_corr_reorder.tsv \
+    ${rna_dir}/raw_table_padj05_NoQuoteNoRowname_TabSep.txt \
+    -gtn "geneMeta" "RNA_DE" \
+    -gtf "geneMeta" \
+    "RNA_DE:log2FoldChange,padj" \
+    -r2 ${rna_dir}/raw_table_padj05_NoQuoteNoRowname_TabSep.txt 
+```
+
+
+
+
 
 
 
