@@ -797,18 +797,6 @@ python3 scripts/ChIP_Annotation EMF2 \
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 ## Motif discovery with MEME ##
 Check [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/12_functional_analysis.html) and [here](https://hbctraining.github.io/Intro-to-ChIPseq/lessons/motif_analysis_prep.html) for help\
 Let's do **MEME-CHIP** (specifically design for ChIP, combine  DREME (motif discovery) and Tomtom (check if motif ressemble known TF))\
@@ -1040,6 +1028,29 @@ gimme background -i data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_ext
 gimme background -i data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend.fasta -f FASTA -s 600 -n 5407 > data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_random.fasta data/ChIPseeker/EMF2_peaks_summit_overlap_genes_complete_extend_gc.fasta gc # Failed to ouptput any data...
 ```
 --> Generated fasta files have been analyzed in MEME-ChIP webservice in discriminative and differential enrichment mode (negative control random sequences).
+
+
+## Other strategy: Filtered the EMF2 peak that overlap with at least 1bp with a H3K27me3 peak And do motif discovery ##
+Let's do:
+- BASH: `bed intersect` To filter out the overlaping EMF2-H3K27me3 peak; keep the Peak ID!!
+- R: In the EMF2 peak summits file, filter the EMF2-overlapping H3K27me3 peaks using Peak ID
+- R: Add +/- 250 bp (as 500 and not 600bp is optimal in MEME-ChIP)
+- BASH: Generate background using gimme background
+- BASH: Generate background using Sammy method
+- WEB: Run MEME-CHIP in Disciminative mode
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Draft notes
 
