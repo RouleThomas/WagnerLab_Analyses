@@ -778,7 +778,7 @@ The tsv file is indeed corrupted... Lets correct it, for that let's just modify 
 cp data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed data/annotations/EMF2/Oryza_tsv_chr_gene_corr.tsv # Copy file
 awk '{print $4"\t"$1"\t"$2"\t"$3"\t"$5"\t"$6}' data/annotations/EMF2/Oryza_tsv_chr_gene_corr.tsv > data/annotations/EMF2/Oryza_tsv_chr_gene_corr_reorder.tsv # Change column order
 ```
-**CONCLUSION TO RUN annotate script**: Make sure headers are the same between the tsv/bed summits/gtf and DEGs files. Also make sure to label gene column as `gene_id`.
+**CONCLUSION TO RUN annotate script**: Make sure headers are the same between the tsv/bed summits/gtf and DEGs files. Also make sure to label gene column as `gene_id` in conda env *CondaUmap*.\
 Here is the script that worked:
 ```bash
 python3 scripts/ChIP_Annotation EMF2 \
@@ -794,7 +794,21 @@ python3 scripts/ChIP_Annotation EMF2 \
     "RNA_DE:log2FoldChange,padj" \
     -r2 ${rna_dir}/raw_table_padj05_NoQuoteNoRowname_TabSep.txt 
 ```
-
+Let's run the script to annotate the H3K27me3 peak!
+```bash
+python3 scripts/ChIP_Annotation H3K27me3 \
+    ${out_dir}/ \
+    ${summits_dir}/EMF2_pool_summits.bed \
+    data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed \
+    -n ${summits_dir}/EMF2_pool_summits.narrowPeak \
+    -tss 4000 -tts 0 \
+    -gt data/annotations/EMF2/Oryza_tsv_chr_gene_corr_reorder.tsv \
+    ${rna_dir}/raw_table_padj05_NoQuoteNoRowname_TabSep.txt \
+    -gtn "geneMeta" "RNA_DE" \
+    -gtf "geneMeta" \
+    "RNA_DE:log2FoldChange,padj" \
+    -r2 ${rna_dir}/raw_table_padj05_NoQuoteNoRowname_TabSep.txt 
+```
 
 
 ## Motif discovery with MEME ##
@@ -1041,7 +1055,7 @@ Let's do:
 
 
 
-
+CHUI AL
 
 
 
