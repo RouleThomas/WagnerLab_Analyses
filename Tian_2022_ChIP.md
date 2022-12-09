@@ -1139,15 +1139,120 @@ gimme background -i data/ChIPseeker/EMF2_peaks_summit_overlap1bp_extend.fasta -f
 ```
 --> Generated fasta files have been analyzed in MEME-ChIP webservice in discriminative mode (negative control random sequences).
 
-CHUI AL : CONCLU !!?? CHECK EMAIL
+**Conclusion**: Plenty of TFs may be invovled in PRC2 recruitment. Among them: AP2, MYB, BhLH, bZIP, C2C2. Also DNA repeat motif found... Lets dig deeper here.
+
+### Now let's isolate the EMF2 peak that DO NOT overlap with H3K27me3 = inactive PRC2. ###
+
+Lets use bedtools intersect with -v flag -a EMF2 and -b H3K27me3; will keep only the EMF2 peaks that do not overlap with H3K27me3. Data are in `data/peaks_for_comparison/`:
+- EMF2_noIgG.narrowPeak
+- H3K27me3_noIgG.broadPeak
+```bash
+## Isolate EMF2 peak non-overlaping with H3K27me3
+bedtools intersect -a data/peaks_for_comparison/EMF2_noIgG.narrowPeak -b data/peaks_for_comparison/H3K27me3_noIgG.broadPeak -v > data/ChIPseeker/EMF2_NotOverlap1bp.bed
+
+#### Convert to FASTA for RepeatMasker ####
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/EMF2_NotOverlap1bp.bed -fo data/ChIPseeker/EMF2_NotOverlap1bp.fasta # BED header as been removed with manual editing
+
+# random option
+conda activate gimme
+gimme background -i data/ChIPseeker/EMF2_NotOverlap1bp.fasta -f FASTA -n 8629 > data/ChIPseeker/EMF2_NotOverlap1bp_random.fasta data/ChIPseeker/EMF2_NotOverlap1bp_random.fasta random # 8629 is the number of peaks (wc -l data/ChIPseeker/EMF2_NotOverlap1bp.bed)
+
+#################################################### OUT OF CURRENT CODE; FORGET TO DO IT BEFORE... ########
+# Background for EMF2 H3K27me3 overlap1bp various peak size
+## FASTA
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.bed -fo data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.fasta # BED header as been removed with manual editing
+
+## Background
+gimme background -i data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.fasta -f FASTA -n 5487 > data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap_random.fasta data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap_random.fasta random # 5487 is the number of peaks (wc -l data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.bed)
+#################################################### ######## ######## ######## ######## ######## ########
+```
+Now let's go in R to have the non overlapping EMF2 sites as 500bp for TF MEME discovery
+
+```bash
+srun --x11 --nodelist=node03 --mem=20g --pty bash -l
+conda activate ChIPseeker
+R
+```
+```R
+library(ChIPseeker)
+library(tidyverse)
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+
+# Open summit and EMF2 overlap H3K27me3 1bp file
+EMF2_peaks_summit =  read_delim('data/macs2_out/chipPeaks/EMF2_pool_summits.bed', col_names=FALSE) %>% dplyr::rename(chr=X1, start=X2, end=X3, name=X4, value=X5)
+EMF2_NotOverlap1bp = read_delim('data/ChIPseeker/EMF2_NotOverlap1bp.bed', col_names = FALSE) %>% dplyr::rename(chr=X1, start=X2, end=X3, name=X4, value=X5) %>% dplyr::select(-X6, -X7, -X8, -X9, -X10)
+
+# isolate the overlap EMF2 peaks from the summit files using peak name
+EMF2_peaks_summit_overlap = EMF2_peaks_summit %>% inner_join(EMF2_NotOverlap1bp %>% dplyr::select(name))
+
+# Extend the peaks to +/- 250bp
+EMF2_peaks_summit_NotOverlap1bp_extend = EMF2_peaks_summit_overlap %>% mutate(start_extend=start-250, end_extend=end+249) %>% dplyr::select(chr, start_extend, end_extend, name, value)
+
+# Export as bed to be converted to FASTA (format should be chr01...) 
+write.table(EMF2_peaks_summit_NotOverlap1bp_extend, file="data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.bed",row.names=FALSE,quote=FALSE,sep='\t')
+
+## Plots the distribution observed:
+# Distribution of EMF2_peaks_summit_NotOverlap1bp_extend
+txdb <- makeTxDbFromBiomart(biomart="plants_mart",
+                            dataset="osativa_eg_gene",
+                            host="plants.ensembl.org")
+                           
+
+# Convert chr name as numerical value as in the txdb file
+
+chr_label <- data.frame (Chr  = c("chr01", "chr02", "chr03", "chr04", "chr05", "chr06", "chr07", "chr08", "chr09", "chr10", "chr11", "chr12"),
+                  chr = c(1:12)
+                  )
+
+EMF2_peaks_summit_Notoverlap1bp_extend_ChrNumeric = EMF2_peaks_summit_NotOverlap1bp_extend %>% dplyr::rename(Chr=chr, start=start_extend, end=end_extend) %>% left_join(chr_label) %>% dplyr::select(chr, start, end, name, value)
+
+# Create genomic range file
+peaks.gr = makeGRangesFromDataFrame(EMF2_peaks_summit_Notoverlap1bp_extend_ChrNumeric, keep.extra.columns=TRUE)
+
+# Annotate peak to genes
+peakAnno  = annotatePeak(peaks.gr,tssRegion=c(-3000,500), TxDb=txdb)
+
+# Check distribution plot relative to features
+pdf('data/ChIPseeker/EMF2_peaks_summit_Notoverlap1bp_extend_distribution.pdf')
+plotAnnoPie(peakAnno)
+dev.off()
+
+# Check distribution to gene
+pdf('data/ChIPseeker/EMF2_peaks_summit_Notoverlap1bp_extend_gene.pdf')
+plotPeakProf2(peak = peaks.gr, upstream = rel(0.2), downstream = rel(0.2),
+              conf = 0.95, by = "gene", type = "body", nbin = 100,
+              TxDb = txdb, ignore_strand = F)
+dev.off()
+```
+Now convert the bed to FASTA to generate the corresponding background file:
+```bash
+conda activate gimme
+```
+Let's use `gimme background` in *random* mode: "randomly generated sequence with the same dinucleotide distribution as the input sequences according to a 1st order Markov model"; GC mode failed...
+```bash
+# Convert bed to fasta
+bedtools getfasta -fi ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -bed data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.bed -fo data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.fasta # BED header as been removed with manual editing
+
+# random option
+gimme background -i data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.fasta -f FASTA -s 500 -n 8629 > data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend_random.fasta data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend_random.fasta random # 8629 is the number of peaks
+```
+
+For comparison of EMF2 overlapping H3K27me3 and EMF2 non overlapping H3K27me3 I will try:
+- MEME-ChIP discriminative mode to identify motifs
+- TOMTOM and FIMO to compare
+
+
+
+## Investigate DNA motifs using RepeatMasker ##
+
+Install [RepeatMasker](https://www.repeatmasker.org/RepeatMasker/) first
 
 
 
 
 
 
-CHUI AL : Generate backgroun using Sammy method
-Transfer files annotation Sammy method to shared Doris folder
+
 
 
 
