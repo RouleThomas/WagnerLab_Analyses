@@ -1239,18 +1239,14 @@ gimme background -i data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.fasta
 
 For comparison of EMF2 overlapping H3K27me3 and EMF2 non overlapping H3K27me3 I will try:
 - MEME-ChIP discriminative mode to identify motifs
-- TOMTOM and FIMO to compare
+- TOMTOM to compare motifs
+
+--> Comparison has been perform on Rstudio Git version controlled script `Tan_ChIP_RNA.R`
 
 
 
 ## Investigate DNA motifs using RepeatMasker ##
-
-Install [RepeatMasker](https://www.repeatmasker.org/RepeatMasker/) first
-
-
-
-
-
+Not sure how
 
 
 
