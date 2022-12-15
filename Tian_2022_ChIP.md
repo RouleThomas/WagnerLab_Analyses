@@ -1245,13 +1245,37 @@ For comparison of EMF2 overlapping H3K27me3 and EMF2 non overlapping H3K27me3 I 
 
 
 
-## Investigate DNA motifs using RepeatMasker ##
-Not sure how
+## Investigate CpG islands role in PRC2 recruitment ##
+Idea here is to see wether EMF2 bound sites are enriched in CG repeats; as in human.\
+Let's first identify the CpG islands in the rice genome. For that let's **emboss tool**, [cpgplot](http://emboss.open-bio.org/rel/rel6/apps/cpgplot.html) as it output a gff file.
 
+First install the [emboss suite](https://emboss.sourceforge.net/download/),:
+```bash
+conda activate CondaUmap
 
+# Download the embo suite to Software directory
+mkdir EMBOSS
+wget -m 'ftp://emboss.open-bio.org/pub/EMBOSS/'
 
+# unpack emboss
+gunzip EMBOSS-6.6.0.tar.gz
+tar xvf EMBOSS-6.6.0.tar
 
+# Compil the soft
+./configure
+make
 
+# to use the command from Tian CHIP directory
+../GreenScreen/Software/emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0/emboss/cpgplot
+
+# Run command with cpgplot
+../GreenScreen/Software/emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0/emboss/cpgplot ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -outfile data/CpG/IRGSP-1.0_genome_CpG.cpgplot -outfeat data/CpG/IRGSP-1.0_genome_CpG.gff -window 100 -minlen 200 -minoe 0.6 -minpc 50. -graph svg
+
+```
+Installation and compiling succesfull! Total files are 3Go total and last 30min for installing\
+cpgplot  runs smoothly; Now let s check the GFF on IGV to see if all good.
+
+CHUI ALLL
 
 
 
