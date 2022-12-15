@@ -1269,13 +1269,93 @@ make
 ../GreenScreen/Software/emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0/emboss/cpgplot
 
 # Run command with cpgplot
-../GreenScreen/Software/emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0/emboss/cpgplot ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -outfile data/CpG/IRGSP-1.0_genome_CpG.cpgplot -outfeat data/CpG/IRGSP-1.0_genome_CpG.gff -window 100 -minlen 200 -minoe 0.6 -minpc 50. -graph svg
+../GreenScreen/Software/emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0/emboss/cpgplot ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -outfile data/CpG/IRGSP-1.0_genome_CpG.cpgplot -outfeat data/CpG/IRGSP-1.0_genome_CpG.gff -window 100 -minlen 200 -minoe 0.6 -minpc 50.
 
+# Stringent version using Takai and Jones parameters
+ ../GreenScreen/Software/emboss.open-bio.org/pub/EMBOSS/EMBOSS-6.6.0/emboss/cpgplot ../GreenScreen/rice/GreenscreenProject/meta/genome/IRGSP-1.0_genome.fasta -outfile data/CpG/IRGSP-1.0_genome_CpG_TakaiJones.cpgplot -outfeat data/CpG/IRGSP-1.0_genome_CpG_TakaiJones.gff -window 100 -minlen 500 -minoe 0.65 -minpc 55.
 ```
 Installation and compiling succesfull! Total files are 3Go total and last 30min for installing\
-cpgplot  runs smoothly; Now let s check the GFF on IGV to see if all good.
+cpgplot  runs smoothly; gff loaded on IGV show a LOT of CpG islands, looks better using Takai and Jones parameters.\
 
-CHUI ALLL
+Now let's annotate my EMF2 peaks (overlap and non-overlap) as CpG or non CpG overlapping using bedtools
+```bash
+######### CpG version -- Isolate the EMF2 overlap and non ovedrlap peaks (a) THAT OVERLAP with a CpG islands (b) (-u to report A entry only ONCE!)
+## Overlap ACTIVE EMF2 site
+bedtools intersect -u -a data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.bed -b data/CpG/IRGSP-1.0_genome_CpG.gff > data/CpG/EMF2_H3K27me3_1bpOverlap_overlapCpG.bed
+
+## Non overlap INACTIVE EMF2 site
+bedtools intersect -u -a data/ChIPseeker/EMF2_NotOverlap1bp.bed -b data/CpG/IRGSP-1.0_genome_CpG.gff > data/CpG/EMF2_NotOverlap1bp_overlapCpG.bed
+
+######### CpG Takai and Jones version -- Isolate the EMF2 overlap and non ovedrlap peaks that overlap with a CpG islands
+## Overlap ACTIVE EMF2 site
+bedtools intersect -u -a data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.bed -b data/CpG/IRGSP-1.0_genome_CpG_TakaiJones.gff > data/CpG/EMF2_H3K27me3_1bpOverlap_overlapCpG_TakaiJones.bed
+
+## Non overlap INACTIVE EMF2 site
+bedtools intersect -u -a data/ChIPseeker/EMF2_NotOverlap1bp.bed -b data/CpG/IRGSP-1.0_genome_CpG_TakaiJones.gff > data/CpG/EMF2_NotOverlap1bp_overlapCpG_TakaiJones.bed
+```
+Then go in R studio and make a simple pie chart, script XXX edited.
+Here is some counts for the table (number of line: wc -l FILE:
+- EMF2 active (overlap 1bp H3K27me3) = 5487
+- EMF2 inactive (NO overlap 1b H3K27me3) = 8629
+- EMF2 active overlapping with CpG = 4408 (80.33% of total active)
+- EMF2 active overlapping with CpG TakaiJones = 2565 (46.75% of total active)
+- EMF2 inactive overlapping with CpG = 5955 (69.01% of total inactive)
+- EMF2 inactive overlapping with CpG TakaiJones = 2335 (27.06% of total inactive)
+
+
+--> Conclusion: Seems that CpG islands are enriched in the active EMF2; that overlap with H3K27me3. But may need a control here... Would be great to have the random match genomic region (Sammy method)
+
+
+## Generate random genomic region of similar size ##
+Script to use is `motif_background_bed.R`. Use the **ChIPseeker conda environment**. \
+**RandomMatchBackground** to generate for:
+- EMF2 overlap H3K27me3 original size: data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.fasta
+- EMF2 non overlap H3K27me3 original size: data/ChIPseeker/EMF2_NotOverlap1bp.fasta
+- EMF2 overlap H3K27me3 extended size: data/ChIPseeker/EMF2_peaks_summit_overlap1bp_extend.fasta
+- EMF2 non overlap H3K27me3 extended size: data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.fasta
+
+
+I updated Sammy script to make it work with rice; script is `motif_background_bed_rice.R`.:\
+
+First need to modify our input bed files to keep only the 4 first columns (does not work otherwise...)
+```bash
+conda activate ChIPseeker
+
+# Copy input files to data/background/ directory
+cp data/peaks_for_comparison/EMF2_H3K27me3_1bpOverlap.bed data/background/
+cp data/ChIPseeker/EMF2_NotOverlap1bp.bed data/background/
+cp data/ChIPseeker/EMF2_peaks_summit_overlap1bp_extend.bed data/background/
+cp data/ChIPseeker/EMF2_peaks_summit_NotOverlap1bp_extend.bed data/background/
+
+# Keep only the first 4 columns
+awk '{print $1,$2,$3,$4}' data/background/EMF2_H3K27me3_1bpOverlap.bed > data/background/EMF2_H3K27me3_1bpOverlap_4columns.bed 
+awk '{print $1,$2,$3,$4}' data/background/EMF2_NotOverlap1bp.bed > data/background/EMF2_NotOverlap1bp_4columns.bed
+awk '{print $1,$2,$3,$4}' data/background/EMF2_peaks_summit_overlap1bp_extend.bed > data/background/EMF2_peaks_summit_overlap1bp_extend_4columns.bed
+awk '{print $1,$2,$3,$4}' data/background/EMF2_peaks_summit_NotOverlap1bp_extend.bed > data/background/EMF2_peaks_summit_NotOverlap1bp_extend_4columns.bed
+```
+then run the script
+```bash
+# Background for EMF2 overlap H3K27me3 original size
+Rscript scripts/motif_background_bed_rice.R data/background/EMF2_H3K27me3_1bpOverlap_4columns.bed  data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed data/background/EMF2_H3K27me3_1bpOverlap_4columns_background.bed  
+
+# Background for EMF2 non overlap H3K27me3 original size
+Rscript scripts/motif_background_bed_rice.R data/background/EMF2_NotOverlap1bp_4columns.bed  data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed data/background/EMF2_NotOverlap1bp_4columns_background.bed  
+
+# Background for EMF2 overlap H3K27me3 extended size
+Rscript scripts/motif_background_bed_rice.R data/background/EMF2_peaks_summit_overlap1bp_extend_4columns.bed  data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed data/background/EMF2_peaks_summit_overlap1bp_extend_4columns_background.bed  
+
+# Background for EMF2 non overlap H3K27me3 extended size
+Rscript scripts/motif_background_bed_rice.R data/background/EMF2_peaks_summit_NotOverlap1bp_extend_4columns.bed  data/annotations/EMF2/Oryza_gtf_bed_chr_gene.bed data/background/EMF2_peaks_summit_NotOverlap1bp_extend_4columns_background.bed  
+```
+Now go in R and make coverage plot for ALL to check it has well worked:
+
+CHUI AL!!!
+
+
+ **--> Conclusion**: The random match genomic region has been XXXsuccessfully??XXX generated.\
+
+Now check the overlap of these random match regions with CpG sites; to be compare with the EMF2 CpG sites overlap...
+
 
 
 
