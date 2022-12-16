@@ -1349,6 +1349,11 @@ Rscript scripts/motif_background_bed_rice.R data/background/EMF2_peaks_summit_No
 ```
 Now go in R and make coverage plot for ALL to check it has well worked:
 
+
+
+
+
+
 CHUI AL!!!
 
 
