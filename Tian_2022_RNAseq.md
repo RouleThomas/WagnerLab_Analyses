@@ -547,4 +547,66 @@ dev.off()
 ```
 ![plot](https://github.com/RouleThomas/WagnerLab_Analyses/blob/main/data_RNAseq/DESeq2/heatmap_cluster_varianceStabilizingTransformation.pdf)
 
-## Conclusion RNAseq ##: DEGs has been generated, to combine with ChIP peaks to find direct PRC2 targets. Overall RNAseq quality looks good (clustering, heatmap, number of DEGs).
+# Calculate TPM values of each genes #
+Let's calculate the TPM value of each gene to compare the relative level of expression of genes (with or without EMF2/H3K27me3, etc...).\
+Here is a script that used featurecounts output as input to calculate TPM (found [here](http://ny-shao.name/2016/11/18/a-short-script-to-calculate-rpkm-and-tpm-from-featurecounts-output.html))
+```R
+#! /usr/bin/env Rscript
+
+## functions for rpkm and tpm
+## from https://gist.github.com/slowkow/c6ab0348747f86e2748b#file-counts_to_tpm-r-L44
+## from https://www.biostars.org/p/171766/
+rpkm <- function(counts, lengths) {
+  rate <- counts / lengths
+  rate / sum(counts) * 1e9
+}
+
+tpm <- function(counts, lengths) {
+  rate <- counts / lengths
+  rate / sum(rate) * 1e6
+}
+
+## read table from featureCounts output
+args <- commandArgs(T)
+tag <- tools::file_path_sans_ext(args[1])
+ftr.cnt <- read.table(args[1], sep="\t", stringsAsFactors=FALSE,
+  header=TRUE)
+library(dplyr)
+library(tidyr)
+
+ftr.rpkm <- ftr.cnt %>%
+  gather(sample, cnt, 7:ncol(ftr.cnt)) %>%
+  group_by(sample) %>%
+  mutate(rpkm=rpkm(cnt, Length)) %>%
+  select(-cnt) %>%
+  spread(sample, rpkm)
+write.table(ftr.rpkm, file=paste0(tag, "_rpkm.txt"), sep="\t", row.names=FALSE, quote=FALSE)
+
+ftr.tpm <- ftr.cnt %>%
+  gather(sample, cnt, 7:ncol(ftr.cnt)) %>%
+  group_by(sample) %>%
+  mutate(tpm=tpm(cnt, Length)) %>%
+  select(-cnt) %>%
+  spread(sample, tpm)
+write.table(ftr.tpm, file=paste0(tag, "_tpm.txt"), sep="\t", row.names=FALSE, quote=FALSE)
+```
+Here is the code used for us in  `conda activate DESeq2` env:
+```bash
+# Rscript scripts/RPKM_TPM_featurecounts.R INPUT OUTPUT_PREFIX
+Rscript scripts/RPKM_TPM_featurecounts.R counts/WT_Rep1.txt WT_Rep1
+Rscript scripts/RPKM_TPM_featurecounts.R counts/WT_Rep2.txt WT_Rep2
+
+Rscript scripts/RPKM_TPM_featurecounts.R counts/SDG711RNAi_Rep1.txt SDG711RNAi_Rep1
+Rscript scripts/RPKM_TPM_featurecounts.R counts/SDG711RNAi_Rep2.txt SDG711RNAi_Rep2
+```
+Now let's plot the TPM of the genes assigned with EMF2 peaks solely (PRC2 inactive) versus EMF2 / H3K27me3 (PRC2 active) in Rstudio in the script `Tan_ChIP_RNA.R`.\
+
+
+
+
+
+
+
+
+
+## Conclusion RNAseq ##: DEGs has been generated, TPM, to combine with ChIP peaks to find direct PRC2 targets. Overall RNAseq quality looks good (clustering, heatmap, number of DEGs).
